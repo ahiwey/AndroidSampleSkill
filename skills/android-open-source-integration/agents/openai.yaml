@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android Open-Source Integration"
+  short_description: "规划并安全集成可追溯、可移除的 Android 开源项目代码"
+  default_prompt: "使用 $android-open-source-integration 规划并实施当前 Android 项目的开源代码集成。"

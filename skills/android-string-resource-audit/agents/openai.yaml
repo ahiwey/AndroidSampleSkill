@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android String Resource Audit"
+  short_description: "审计、补齐并安全排序 Android 多语言字符串资源"
+  default_prompt: "Use $android-string-resource-audit to audit Android strings.xml coverage, translation gaps, encoding, placeholders, and locale ordering."

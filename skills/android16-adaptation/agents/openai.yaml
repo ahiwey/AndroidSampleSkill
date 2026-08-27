@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android 16 Adaptation"
+  short_description: "审计、实施并验证 Android 16 / API 36 兼容性"
+  default_prompt: "使用 $android16-adaptation 审计并实施当前应用的 Android 16 / API 36 适配。"

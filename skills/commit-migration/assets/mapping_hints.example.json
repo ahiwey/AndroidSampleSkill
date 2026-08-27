@@ -1,0 +1,39 @@
+{
+  "package_roots": {
+    "com/qcwireless/smart": "com/fitpaddy/smart"
+  },
+  "path_overrides": {
+    "app/src/main/java/com/source/OldSettingItem.kt": "app/src/main/java/com/target/NewSettingItem.kt"
+  },
+  "related_paths": {
+    "app/src/main/java/com/source/FeatureFragment.kt": [
+      "app/src/main/java/com/target/FeatureActivity.kt",
+      "app/src/main/res/layout/activity_feature.xml"
+    ]
+  },
+  "resource_name_map": {
+    "old_ring_primary": "ring_main"
+  },
+  "flavor_map": {
+    "SourceBrand": "target_brand"
+  },
+  "protected_paths": [
+    "app/src/main/java/com/target/device/UnrelatedRecordListActivity.kt"
+  ],
+  "merge_only_paths": [
+    "app/src/main/java/com/target/feature/TargetActivity.kt"
+  ],
+  "forbidden_source_tokens": [
+    "com.source",
+    "SourceBrand"
+  ],
+  "validation": {
+    "compile": "./gradlew :app:compileTargetDebugKotlin",
+    "focused_tests": "./gradlew :app:testTargetDebugUnitTest --tests '*FeatureTest*'",
+    "assemble": "./gradlew :app:assembleTargetDebug"
+  },
+  "source_repositories": [
+    { "label": "source-brand", "path": "D:/Project/Android/SourceBrand", "branch": "source/main" }
+  ],
+  "notes": ["Preserve target-only branding and reliability fixes."]
+}

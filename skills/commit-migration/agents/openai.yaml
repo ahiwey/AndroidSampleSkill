@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android Commit Migration"
+  short_description: "分析并迁移 Android 提交、分支及跨仓库文件改动"
+  default_prompt: "使用 $commit-migration 将指定提交或分支改动适配迁移到当前 Android 项目。"
