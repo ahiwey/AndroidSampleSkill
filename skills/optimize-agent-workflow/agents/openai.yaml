@@ -1,0 +1,4 @@
+interface:
+  display_name: "优化智能体工作流"
+  short_description: "审计近期智能体任务，减少返工、耗时与 Token 消耗"
+  default_prompt: "Use $optimize-agent-workflow to audit my recent agent tasks and apply safe, verifiable workflow improvements."

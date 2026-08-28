@@ -10,6 +10,7 @@ A curated collection of reusable Codex skills for Android engineering workflows.
 | `android-open-source-integration` | Plan and implement traceable Android open-source integrations with licensing and removal guardrails. |
 | `android16-adaptation` | Audit, implement, and verify Android 16 / API 36 compatibility and release readiness. |
 | `commit-migration` | Port Android commits, branches, or selected files while adapting packages, resources, manifests, and project structure. |
+| `optimize-agent-workflow` | Audit recent agent tasks and improve rework, elapsed time, token use, prompts, and reusable rules. |
 | `reasoning-playbooks` | Route Chinese requests through 12 reusable reasoning and decision playbooks. |
 
 The separate [AndroidEasyRules](https://github.com/ahiwey/AndroidEasyRules) project remains its canonical repository and is linked here instead of being duplicated.
