@@ -87,8 +87,11 @@ If AndroidSampleSkill cannot be found, ask for its repository path instead of si
 
 - Inspect final diffs and UTF-8 validity.
 - Use the smallest validation that covers the changed rule or workflow; do not run Android Gradle for rules-only edits.
-- Track future measurements such as first-delivery pass rate, true rework turns, clarification turns, same-scene visual validation coverage, repeated file reads, tool failures, build wait time, and time to verified result.
+- Always leave a next-cycle measurement plan, even when the current audit lacks a reliable baseline. Read [references/measurement-loop.md](references/measurement-loop.md) and select only 3–5 metrics tied to this audit's findings.
+- For every selected metric, record the current evidence or `baseline unavailable`, the collection method, the comparison window, and the decision threshold that would justify another rule or workflow change.
+- Prefer metrics such as first-delivery pass rate, true rework turns, clarification turns, same-scene visual validation coverage, repeated file reads, tool failures, build wait time, and time to verified result. Do not track all of them by default.
 - Report token changes only when the environment exposes reliable per-task usage. Otherwise use tool/output proxies and label estimates.
+- At the next audit, compare against the previous plan before proposing new permanent rules. Preserve useful rules, revise ineffective ones, and remove or narrow rules whose cost exceeds their measured benefit.
 
 ## 8. Deliver the closeout
 
@@ -99,7 +102,7 @@ Include:
 - implemented changes and changed files;
 - validation commands and results;
 - deferred changes and reasons;
-- next-cycle metrics;
+- a next-cycle tracking table with metric, baseline, target or decision threshold, collection method, and review window;
 - improved general, Quick, and relevant specialist prompt templates;
 - remaining risks, including unsynchronized or uncommitted rule sources.
 
