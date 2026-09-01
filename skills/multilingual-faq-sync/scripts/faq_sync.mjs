@@ -8,11 +8,12 @@ const DEFAULT_LOCALES = ['cn', 'cs', 'de', 'en', 'es', 'fr', 'hu', 'it', 'ja', '
 function usage(exitCode = 0) {
   console.log(`Usage:
   node faq_sync.mjs audit --dir <faq-json-dir> [--base <english-source>] [--locales <csv>] [--json] [--max-errors <n>]
-  node faq_sync.mjs inspect --dir <faq-json-dir> [--base <english-source>] [--faq <n> | --contains <text>] [--json]
-  node faq_sync.mjs apply --dir <faq-json-dir> --spec <change-spec.json> [--base <english-source>] [--locales <csv>] [--write]
+  node faq_sync.mjs inspect --dir <faq-json-dir> [--base <english-source>] [--locale <code>] [--faq <n> | --contains <text>] [--json]
+  node faq_sync.mjs apply --dir <faq-json-dir> --spec <change-spec.json|-> [--base <english-source>] [--locales <csv>] [--write] [--json]
 
 Defaults: ${DEFAULT_LOCALES.join(', ')}
---base accepts an English JSON file or a Vue/JS file containing items: [...].`);
+--base accepts an English JSON file or a Vue/JS file containing items: [...].
+--spec - reads the change spec from standard input.`);
   process.exit(exitCode);
 }
 
@@ -24,7 +25,7 @@ function parseArgs(argv) {
     const arg = rest[index];
     if (arg === '--write') options.write = true;
     else if (arg === '--json') options.json = true;
-    else if (['--dir', '--spec', '--base', '--locales', '--faq', '--contains', '--max-errors'].includes(arg)) {
+    else if (['--dir', '--spec', '--base', '--locales', '--locale', '--faq', '--contains', '--max-errors'].includes(arg)) {
       if (!rest[index + 1]) throw new Error(`${arg} requires a value`);
       const key = arg === '--max-errors' ? 'maxErrors' : arg.slice(2);
       options[key] = rest[++index];
@@ -33,6 +34,7 @@ function parseArgs(argv) {
   if (!['audit', 'inspect', 'apply'].includes(command)) throw new Error(`Unknown command: ${command}`);
   if (!options.dir) throw new Error('--dir is required');
   if (command === 'apply' && !options.spec) throw new Error('--spec is required for apply');
+  if (options.locale && command !== 'inspect') throw new Error('--locale is only valid for inspect');
   if (options.locales !== DEFAULT_LOCALES) {
     options.locales = [...new Set(String(options.locales).split(',').map(value => value.trim()).filter(Boolean))];
     if (!options.locales.includes('en')) throw new Error('--locales must include en as the structural baseline');
@@ -41,6 +43,7 @@ function parseArgs(argv) {
     options.faq = Number(options.faq);
     if (!Number.isInteger(options.faq) || options.faq < 1) throw new Error('--faq must be a positive integer');
   }
+  if (options.locale && !options.locales.includes(options.locale)) throw new Error('--locale must be included in --locales');
   options.maxErrors = Number(options.maxErrors);
   if (!Number.isInteger(options.maxErrors) || options.maxErrors < 0) throw new Error('--max-errors must be a non-negative integer');
   return options;
@@ -363,32 +366,67 @@ function printAudit(workspace, errors, asJson, maxErrors) {
   }
 }
 
-function inspectBaseline(workspace, options) {
+function inspectWorkspace(workspace, options) {
   if (!workspace.baseRecord) throw new Error(workspace.errors.join('; ') || 'English baseline is unavailable');
-  const data = workspace.baseRecord.data;
-  const baselineErrors = validateBaseline(data);
+  const baseline = workspace.baseRecord.data;
+  const baselineErrors = validateBaseline(baseline);
   if (baselineErrors.length) throw new Error(baselineErrors.join('; '));
+
+  const locale = options.locale || 'en';
+  const record = locale === 'en' ? workspace.baseRecord : workspace.records.get(locale);
+  if (!record) throw new Error(`Locale source is unavailable: ${locale}`);
+  const data = record.data;
+  const localeErrors = validateBaseline(data);
+  if (localeErrors.length) throw new Error(`${locale} source is invalid: ${localeErrors.join('; ')}`);
+  if (data.length !== baseline.length) throw new Error(`${locale} FAQ count ${data.length} != English baseline ${baseline.length}`);
+
+  const explicitLocale = options.locale !== undefined;
+  const itemResult = (item, itemIndex, faqIndex) => explicitLocale
+    ? { item: itemIndex + 1, q: item.q, englishQ: baseline[faqIndex].itemTexts[itemIndex]?.q ?? null }
+    : { item: itemIndex + 1, q: item.q };
+  const faqResult = (faq, faqIndex) => explicitLocale
+    ? { faq: faqIndex + 1, locale, title: faq.title, englishTitle: baseline[faqIndex].title, itemTexts: faq.itemTexts.map((item, itemIndex) => itemResult(item, itemIndex, faqIndex)) }
+    : { faq: faqIndex + 1, ...faq };
+
   let output;
   if (options.faq !== undefined) {
     const index = requireIndex(options.faq, data.length, 'faq');
-    output = { faq: index + 1, ...data[index] };
+    output = faqResult(data[index], index);
   } else if (options.contains !== undefined) {
     const needle = String(options.contains).toLocaleLowerCase();
     output = data.flatMap((faq, faqIndex) => {
       const titleMatch = faq.title.toLocaleLowerCase().includes(needle);
-      const matches = faq.itemTexts.flatMap((item, itemIndex) => item.q.toLocaleLowerCase().includes(needle) ? [{ item: itemIndex + 1, q: item.q }] : []);
-      return titleMatch || matches.length ? [{ faq: faqIndex + 1, title: faq.title, matches }] : [];
+      const matches = faq.itemTexts.flatMap((item, itemIndex) => item.q.toLocaleLowerCase().includes(needle) ? [itemResult(item, itemIndex, faqIndex)] : []);
+      const result = { faq: faqIndex + 1, title: faq.title, matches };
+      if (explicitLocale) Object.assign(result, { locale, englishTitle: baseline[faqIndex].title });
+      return titleMatch || matches.length ? [result] : [];
     });
-  } else output = data.map((faq, index) => ({ faq: index + 1, title: faq.title }));
+  } else output = data.map((faq, index) => explicitLocale
+    ? { faq: index + 1, locale, title: faq.title, englishTitle: baseline[index].title }
+    : { faq: index + 1, title: faq.title });
   if (options.json || options.faq !== undefined || options.contains !== undefined) console.log(JSON.stringify(output, null, 2));
   else output.forEach(item => console.log(`${item.faq}\t${item.title}`));
+}
+
+function readSpec(specOption) {
+  const source = specOption === '-' ? 'standard input' : path.resolve(specOption);
+  const raw = fs.readFileSync(specOption === '-' ? 0 : source, 'utf8');
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Invalid change spec from ${source}: ${error.message}`);
+  }
+}
+
+function operationSummary(operation) {
+  return Object.fromEntries(['type', 'faq', 'item', 'position'].filter(key => operation[key] !== undefined).map(key => [key, operation[key]]));
 }
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const workspace = loadWorkspace(options.dir, options.locales, options.base);
   if (options.command === 'inspect') {
-    inspectBaseline(workspace, options);
+    inspectWorkspace(workspace, options);
     return;
   }
 
@@ -398,16 +436,17 @@ function main() {
     process.exit(preAuditErrors.length ? 1 : 0);
   }
   if (preAuditErrors.length) {
-    printAudit(workspace, preAuditErrors, false, options.maxErrors);
+    printAudit(workspace, preAuditErrors, options.json, options.maxErrors);
     throw new Error('Refusing to apply changes until the selected locale baseline audit passes');
   }
 
-  const spec = JSON.parse(fs.readFileSync(path.resolve(options.spec), 'utf8'));
+  const spec = readSpec(options.spec);
   if (!Array.isArray(spec.operations) || !spec.operations.length) throw new Error('Spec requires a non-empty operations array');
+  const faqCountBefore = workspace.baseRecord.data.length;
   spec.operations.forEach(operation => applyOperation(workspace, operation));
   const postAuditErrors = auditWorkspace(workspace);
   if (postAuditErrors.length) {
-    printAudit(workspace, postAuditErrors, false, options.maxErrors);
+    printAudit(workspace, postAuditErrors, options.json, options.maxErrors);
     throw new Error('Generated FAQ data failed validation');
   }
 
@@ -415,8 +454,34 @@ function main() {
   writeTargets.set(workspace.baseRecord.filePath, workspace.baseRecord);
   if (options.write) {
     for (const record of writeTargets.values()) fs.writeFileSync(record.filePath, serialize(record), 'utf8');
-    console.log(`WROTE: ${spec.operations.length} operation(s), ${writeTargets.size} source file(s), ${workspace.locales.length} variant(s).`);
-  } else console.log(`DRY RUN OK: ${spec.operations.length} operation(s), ${writeTargets.size} source file(s), ${workspace.locales.length} variant(s). Add --write to save.`);
+  }
+
+  const validatedWorkspace = options.write ? loadWorkspace(options.dir, options.locales, options.base) : workspace;
+  const validationErrors = auditWorkspace(validatedWorkspace);
+  if (validationErrors.length) {
+    printAudit(validatedWorkspace, validationErrors, options.json, options.maxErrors);
+    throw new Error(options.write ? 'Written FAQ data failed reload validation' : 'Generated FAQ data failed validation');
+  }
+
+  const targetFiles = [...writeTargets.keys()];
+  const report = {
+    ok: true,
+    mode: options.write ? 'write' : 'dry-run',
+    operationCount: spec.operations.length,
+    operations: spec.operations.map(operationSummary),
+    sourceFileCount: targetFiles.length,
+    targetFiles,
+    writtenFiles: options.write ? targetFiles : [],
+    variantCount: workspace.locales.length,
+    locales: workspace.locales,
+    baseline: workspace.baseRecord.filePath,
+    faqCountBefore,
+    faqCountAfter: validatedWorkspace.baseRecord.data.length,
+    validation: resultSummary(validatedWorkspace, validationErrors, options.maxErrors),
+  };
+  if (options.json) console.log(JSON.stringify(report, null, 2));
+  else if (options.write) console.log(`WROTE: ${spec.operations.length} operation(s), ${writeTargets.size} source file(s), ${workspace.locales.length} variant(s); reload validation passed.`);
+  else console.log(`DRY RUN OK: ${spec.operations.length} operation(s), ${writeTargets.size} source file(s), ${workspace.locales.length} variant(s). Add --write to save.`);
 }
 
 try {

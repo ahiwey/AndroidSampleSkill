@@ -48,26 +48,29 @@ node scripts/faq_sync.mjs audit --dir <faq-json-dir>
 node scripts/faq_sync.mjs audit --dir <faq-json-dir> --base <english.vue> --json
 ```
 
-只查看英文标题、关键词命中或某一条 FAQ，避免读取整份多语言数据：
+只查看英文标题、关键词命中或某一条 FAQ，避免读取整份多语言数据。用户只提供了某种本地化文案时，可指定语言搜索，并同时拿到同一结构坐标上的英文：
 
 ```powershell
 node scripts/faq_sync.mjs inspect --dir <faq-json-dir> --base <english.vue>
 node scripts/faq_sync.mjs inspect --dir <faq-json-dir> --base <english.vue> --contains "operating system"
+node scripts/faq_sync.mjs inspect --dir <faq-json-dir> --base <english.vue> --locale cn --contains "手机系统"
 node scripts/faq_sync.mjs inspect --dir <faq-json-dir> --base <english.vue> --faq 8
 ```
 
 预览变更：
 
 ```powershell
-node scripts/faq_sync.mjs apply --dir <faq-json-dir> --base <english.vue> --spec <change-spec.json>
+node scripts/faq_sync.mjs apply --dir <faq-json-dir> --base <english.vue> --spec <change-spec.json> --json
 ```
 
 确认后写入并复查：
 
 ```powershell
-node scripts/faq_sync.mjs apply --dir <faq-json-dir> --base <english.vue> --spec <change-spec.json> --write
-node scripts/faq_sync.mjs audit --dir <faq-json-dir> --base <english.vue>
+node scripts/faq_sync.mjs apply --dir <faq-json-dir> --base <english.vue> --spec <change-spec.json> --write --json
+Get-Content -Raw <change-spec.json> | node scripts/faq_sync.mjs apply --dir <faq-json-dir> --base <english.vue> --spec - --write --json
 ```
+
+`--spec -` 从标准输入读取变更规范，可省去临时规范文件。写入命令会重新加载实际文件并完成结构审计；JSON 报告包含操作坐标、目标文件、实际写入文件、FAQ 数量和验证结果。只有文件之后又被其他工具修改，或需要独立复核时，才再单独运行 `audit`。
 
 如果用户选择不补缺失语言，可以通过 `--locales cn,de,en,es,fr,it,ja,pt` 明确本次安全同步范围。脚本只使用 Node.js 标准库，不需要安装 npm 依赖。
 
@@ -76,10 +79,10 @@ node scripts/faq_sync.mjs audit --dir <faq-json-dir> --base <english.vue>
 ## 为什么更快
 
 - 只读取一次英文基准并用结构坐标同步，不逐语言做语义搜索。
-- `inspect` 只输出目标英文片段，避免将完整 JSON 或 Vue 数据送入模型上下文。
+- `inspect` 只输出目标语言命中片段及同坐标英文，避免将完整 JSON 或 Vue 数据送入模型上下文。
 - 删除和排序完全由本地脚本完成。
 - 新增、修改只翻译变化的句子，一次生成 10 个目标语言结果。
-- 多项操作合并为一次预览、一次写入和一次审计。
+- 多项操作合并为一次预览、一次写入；写入过程内置重新加载审计。
 
 ## 插件建议
 

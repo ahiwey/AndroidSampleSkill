@@ -14,6 +14,8 @@ Indexes and positions are one-based. Operations run in listed order.
 
 Every add/update must contain English plus every locale selected by `--locales`. The default therefore requires all 11 values. Each operation may set `renumber_items` to `auto` (default), `all`, or `none`.
 
+Pass a file path to `--spec`, or pass `--spec -` to read the same JSON object from standard input. Add `--json` to receive a structured dry-run/write report; a successful write report includes the files written and the result of reloading and auditing them.
+
 ## Deletion example
 
 ```json

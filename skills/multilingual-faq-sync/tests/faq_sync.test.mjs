@@ -20,14 +20,14 @@ function fixture() {
   return root;
 }
 
-function run(args) {
-  return spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
+function run(args, options = {}) {
+  return spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', ...options });
 }
 
-function embeddedFixture() {
+function embeddedFixture({ keepEnglishJson = false } = {}) {
   const root = fixture();
   const english = fs.readFileSync(path.join(root, 'en.json'), 'utf8').trim();
-  fs.unlinkSync(path.join(root, 'en.json'));
+  if (!keepEnglishJson) fs.unlinkSync(path.join(root, 'en.json'));
   const base = path.join(root, 'question_list.vue');
   fs.writeFileSync(base, `<script>\nexport default { data() { return { items: ${english}, active: 1 }; } };\n</script>\n`);
   return { root, base };
@@ -111,6 +111,52 @@ test('external embedded English baseline replaces a missing en.json', () => {
   assert.doesNotMatch(fs.readFileSync(base, 'utf8'), /Old requirement/);
   assert.match(fs.readFileSync(base, 'utf8'), /items: \[/);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'cn.json')))[0].itemTexts.map(item => item.q), ['(1) Enable Bluetooth', '(2) Bind in app']);
+});
+
+test('external upstream English and en.json are both updated when both exist', () => {
+  const { root, base } = embeddedFixture({ keepEnglishJson: true });
+  const spec = path.join(root, 'delete-both-english-sources.json');
+  fs.writeFileSync(spec, JSON.stringify({ operations: [{ type: 'delete_item', faq: 1, item: 1, expect_en_contains: 'Old requirement' }] }));
+
+  const write = run(['apply', '--dir', root, '--base', base, '--spec', spec, '--write']);
+  assert.equal(write.status, 0, write.stderr);
+  assert.doesNotMatch(fs.readFileSync(base, 'utf8'), /Old requirement/);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'en.json'), 'utf8'), /Old requirement/);
+});
+
+test('inspect can locate localized text and returns the English coordinate', () => {
+  const root = fixture();
+  const cnPath = path.join(root, 'cn.json');
+  const cn = JSON.parse(fs.readFileSync(cnPath));
+  cn[0].title = '1. 如何连接？';
+  cn[0].itemTexts[1].q = '(2) 打开蓝牙';
+  fs.writeFileSync(cnPath, JSON.stringify(cn, null, 2));
+
+  const result = run(['inspect', '--dir', root, '--locale', 'cn', '--contains', '蓝牙']);
+  assert.equal(result.status, 0, result.stderr);
+  const [match] = JSON.parse(result.stdout);
+  assert.equal(match.locale, 'cn');
+  assert.equal(match.faq, 1);
+  assert.equal(match.englishTitle, '1. Connect?');
+  assert.deepEqual(match.matches, [{ item: 2, q: '(2) 打开蓝牙', englishQ: '(2) Enable Bluetooth' }]);
+});
+
+test('apply accepts a spec on stdin and emits a structured write report', () => {
+  const root = fixture();
+  const input = JSON.stringify({ operations: [{ type: 'delete_item', faq: 1, item: 1, expect_en_contains: 'Old requirement' }] });
+  const result = run(['apply', '--dir', root, '--spec', '-', '--write', '--json'], { input });
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, true);
+  assert.equal(report.mode, 'write');
+  assert.equal(report.operationCount, 1);
+  assert.deepEqual(report.operations, [{ type: 'delete_item', faq: 1, item: 1 }]);
+  assert.equal(report.sourceFileCount, 11);
+  assert.equal(report.writtenFiles.length, 11);
+  assert.equal(report.faqCountBefore, 3);
+  assert.equal(report.faqCountAfter, 3);
+  assert.equal(report.validation.ok, true);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'en.json')))[0].itemTexts.map(item => item.q), ['(1) Enable Bluetooth', '(2) Bind in app']);
 });
 
 test('missing locale interview data is compact and selected locales can continue', () => {

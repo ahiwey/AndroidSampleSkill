@@ -24,20 +24,23 @@ Preserve structure, ordering, numbering style, placeholders, brands, encoding, i
 
 3. If required locale files, routes/nodes, FAQs, or translations are missing and the user has not decided whether to repair them, ask one concise interview question listing the missing locale codes. If the user already requested all 11 languages or said to fill missing content, proceed without asking. If they decline, use `--locales` with the existing set only when that selected structural audit passes, and report the remaining difference.
 4. If the audit reports broad pre-existing structural drift, summarize `faqCounts`, `issuesByLocale`, and only the displayed error samples. Do not load more errors or apply coordinates. Ask one decision question: realign/rebuild from English, or perform a separately reviewed semantic repair. Combine this with the missing-language question when both occur.
-5. Locate the English target without loading the source file:
+5. Locate the target without loading full locale files. Search English directly, or search one selected locale and return the English text at the same structural coordinate:
 
    ```powershell
    node scripts/faq_sync.mjs inspect --dir <json-dir> [--base <english.vue>] --contains <keyword>
+   node scripts/faq_sync.mjs inspect --dir <json-dir> [--base <english.vue>] --locale cn --contains <localized-keyword>
    node scripts/faq_sync.mjs inspect --dir <json-dir> [--base <english.vue>] --faq <n>
    ```
 
-6. Put all requested operations into one spec, preview once, then write once. Deletions need no translation. Additions and updates translate only changed fields, producing all required locales in one batch.
+6. Put all requested operations into one spec, preview once, then write once. Use `--spec -` to read JSON from standard input when avoiding a temporary file. Deletions need no translation. Additions and updates translate only changed fields, producing all required locales in one batch.
 
    ```powershell
-   node scripts/faq_sync.mjs apply --dir <json-dir> --spec <spec.json> [--base <english.vue>] [--locales <csv>]
-   node scripts/faq_sync.mjs apply --dir <json-dir> --spec <spec.json> [--base <english.vue>] [--locales <csv>] --write
-   node scripts/faq_sync.mjs audit --dir <json-dir> [--base <english.vue>] [--locales <csv>]
+   node scripts/faq_sync.mjs apply --dir <json-dir> --spec <spec.json> [--base <english.vue>] [--locales <csv>] --json
+   node scripts/faq_sync.mjs apply --dir <json-dir> --spec <spec.json> [--base <english.vue>] [--locales <csv>] --write --json
+   Get-Content -Raw <spec.json> | node scripts/faq_sync.mjs apply --dir <json-dir> --spec - [--base <english.vue>] [--locales <csv>] --write --json
    ```
+
+   The write command reloads the written sources and runs the structural audit before reporting success. Its JSON report lists operation coordinates, target files, written files, FAQ counts, and validation results. Run a separate `audit` only after external edits or when an independent recheck is requested.
 
 7. Run `git diff --check`, search for deletion residue, and inspect only changed source files. Build only if imports, routes, schema, or runtime rendering changed.
 
@@ -46,6 +49,7 @@ For operation fields and examples, read [references/change-spec.md](references/c
 ## Decision rules
 
 - Use English FAQ/item indexes as cross-locale coordinates only after the selected locale audit passes.
+- Use `inspect --locale <code>` when the user supplied localized wording; apply only the returned English coordinate and precondition.
 - Guard every delete/update with `expect_en_contains`; never trust an unverified index.
 - Top-level FAQ numbers always become continuous after structural changes.
 - `renumber_items: auto` shifts subitem numbers only when the original list is fully numbered; use `all` to force numbering and `none` to preserve text.
@@ -59,7 +63,7 @@ For operation fields and examples, read [references/change-spec.md](references/c
 - Never load all locale JSON files into model context after structural alignment passes.
 - Combine related operations and all changed-string translations into one pass.
 - Deletion/reordering is local-only and should not trigger web access or translation.
-- Stop after one preview, one write, one post-audit, and one diff review unless a check fails.
+- Stop after one preview, one write with its built-in reload audit, and one diff review unless a check fails.
 
 ## Delivery
 
