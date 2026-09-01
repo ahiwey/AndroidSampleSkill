@@ -1,0 +1,65 @@
+{
+  "skill_name": "multilingual-faq-sync",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "项目的 src/json 下有 cn/cs/de/en/es/fr/hu/it/ja/pt/sk.json。删除英文第 1 条 FAQ 的第 1 个子项，并同步所有语言；后续子项编号前移，不改其他 FAQ。",
+      "expected_output": "先审计 11 个语言结构，再按英文结构坐标删除同一子项，使用 bundled script dry-run/write/audit，并证明所有文件数量与编号一致。",
+      "files": [],
+      "expectations": [
+        "使用 faq_sync.mjs 而不是临时编写新的批量改写脚本",
+        "删除操作不重新翻译或重写未变化 FAQ",
+        "11 个语言文件保持结构一致且子项编号连续",
+        "执行写入前预览并在写入后重新审计"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "在 FAQ 第 8 条末尾新增一个‘充电时请使用 5V/1A 适配器’的子项，默认支持 q_cn、q_cs、q_de、q_en、q_es、q_fr、q_hu、q_it、q_ja、q_pt、q_sk。只翻译新增句子。",
+      "expected_output": "为新增子项一次生成 11 个语言值，通过 add_item change spec 同步写入，保留 5V/1A，并验证结构、编号和数字。",
+      "files": [],
+      "expectations": [
+        "只翻译新增子项而不是重译完整 FAQ 文件",
+        "change spec 包含全部 11 个语言且没有英语回退",
+        "5V/1A 在所有语言中保持不变",
+        "脚本验证 FAQ 和 itemTexts 数量逐语言一致"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "把英文第 22 条天气 FAQ 标题和第一段说明改得更简洁，并同步 11 种语言。项目里某个语言比英文少一个 itemTexts，请处理。",
+      "expected_output": "预审计先发现并报告结构漂移，修复或请求确定正确对齐后才执行坐标更新；更新只涉及标题和第一段的新翻译。",
+      "files": [],
+      "expectations": [
+        "在结构漂移修复前拒绝直接按索引更新",
+        "使用 expect_en_contains 防止过期索引误改",
+        "只更新标题和第一段对应翻译",
+        "最终审计确认 11 个语言重新对齐"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "删除第 4 条 FAQ。项目只有 cn/en/de/es/fr/it/ja/pt，其他语言似乎没做，我没有说明要不要补。",
+      "expected_output": "预审计列出缺失的 cs/hu/sk，并在修改前用一次集中采访询问是否按更新后的英语基准创建并翻译补齐；不自行假定用户选择。",
+      "files": [],
+      "expectations": [
+        "明确列出缺失语言代码",
+        "只进行一次关于是否补齐的集中采访",
+        "在用户回答前不写入 FAQ 文件",
+        "若用户明确选择不补，报告 11 语言仍未对齐"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "英语 FAQ 没有 en.json，而是内嵌在 src/components/question_list.vue 的 items 数组中。删除包含 operating system 的答案，并同步已有语言；不要把所有 JSON 内容打印出来。",
+      "expected_output": "用 --base 指向 Vue 英语源，通过 inspect --contains 只读取命中片段，按结构坐标在一个 spec 中删除，并同步更新英语源和选定语言文件。",
+      "files": [],
+      "expectations": [
+        "识别并更新 Vue/JavaScript 中的上游英语 items 数组",
+        "使用 inspect 而不是读取或输出所有语言 JSON",
+        "删除操作不生成翻译",
+        "只执行一次预览、一次写入和一次写后审计"
+      ]
+    }
+  ]
+}
