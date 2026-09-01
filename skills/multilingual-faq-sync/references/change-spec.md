@@ -12,7 +12,7 @@ Indexes and positions are one-based. Operations run in listed order.
 - `update_item`: `faq`, `item`, `expect_en_contains`, `translations[locale] = "..."`
 - `update_title`: `faq`, `expect_en_contains`, `translations[locale] = "..."`
 
-Every add/update must contain English plus every locale selected by `--locales`. The default therefore requires all 11 values. Each operation may set `renumber_items` to `auto` (default), `all`, or `none`.
+Every add/update must contain English plus every effective locale: all locales selected by `--locales` and every locale-like JSON file already present in `--dir`. The default therefore requires all 11 values plus any branch-only locales. Each operation may set `renumber_items` to `auto` (default), `all`, or `none`.
 
 Pass a file path to `--spec`, or pass `--spec -` to read the same JSON object from standard input. Add `--json` to receive a structured dry-run/write report; a successful write report includes the files written and the result of reloading and auditing them.
 

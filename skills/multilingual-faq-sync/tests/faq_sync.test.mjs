@@ -40,6 +40,46 @@ test('audit accepts aligned 11-locale data', () => {
   assert.match(result.stdout, /11 variants aligned/);
 });
 
+test('branch-only locale is discovered, inspected, and updated automatically', () => {
+  const root = fixture();
+  const trPath = path.join(root, 'tr.json');
+  const tr = JSON.parse(fs.readFileSync(path.join(root, 'en.json')));
+  tr[0].title = '1. Nasıl bağlanır?';
+  tr[0].itemTexts[1].q = '(2) Bluetooth açın';
+  fs.writeFileSync(trPath, `${JSON.stringify(tr, null, 2)}\n`);
+
+  const audit = run(['audit', '--dir', root, '--json']);
+  assert.equal(audit.status, 0, audit.stderr);
+  const auditReport = JSON.parse(audit.stdout);
+  assert.deepEqual(auditReport.extraLocales, ['tr']);
+  assert.equal(auditReport.locales.includes('tr'), true);
+
+  const inspect = run(['inspect', '--dir', root, '--locale', 'tr', '--contains', 'Bluetooth açın']);
+  assert.equal(inspect.status, 0, inspect.stderr);
+  assert.equal(JSON.parse(inspect.stdout)[0].matches[0].englishQ, '(2) Enable Bluetooth');
+
+  const input = JSON.stringify({ operations: [{ type: 'delete_item', faq: 1, item: 1, expect_en_contains: 'Old requirement' }] });
+  const write = run(['apply', '--dir', root, '--spec', '-', '--write', '--json'], { input });
+  assert.equal(write.status, 0, write.stderr);
+  const writeReport = JSON.parse(write.stdout);
+  assert.deepEqual(writeReport.extraLocales, ['tr']);
+  assert.equal(writeReport.writtenFiles.includes(trPath), true);
+  assert.deepEqual(JSON.parse(fs.readFileSync(trPath))[0].itemTexts.map(item => item.q), ['(1) Bluetooth açın', '(2) Bind in app']);
+});
+
+test('add or update requires translations for branch-only locales', () => {
+  const root = fixture();
+  const trPath = path.join(root, 'tr.json');
+  fs.copyFileSync(path.join(root, 'en.json'), trPath);
+  const translations = Object.fromEntries(locales.map(locale => [locale, '(3) New instruction']));
+  const input = JSON.stringify({ operations: [{ type: 'add_item', faq: 2, position: 3, translations }] });
+
+  const result = run(['apply', '--dir', root, '--spec', '-', '--write'], { input });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /missing tr translation/);
+  assert.equal(JSON.parse(fs.readFileSync(trPath))[1].itemTexts.length, 2);
+});
+
 test('delete_item dry-run does not write and write renumbers all locales', () => {
   const root = fixture();
   const spec = path.join(root, 'spec.json');
@@ -159,7 +199,7 @@ test('apply accepts a spec on stdin and emits a structured write report', () => 
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'en.json')))[0].itemTexts.map(item => item.q), ['(1) Enable Bluetooth', '(2) Bind in app']);
 });
 
-test('missing locale interview data is compact and selected locales can continue', () => {
+test('missing required locale data is compact and an explicit required subset can continue', () => {
   const { root, base } = embeddedFixture();
   fs.unlinkSync(path.join(root, 'cs.json'));
   fs.unlinkSync(path.join(root, 'hu.json'));

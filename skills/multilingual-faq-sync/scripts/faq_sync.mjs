@@ -13,6 +13,7 @@ function usage(exitCode = 0) {
 
 Defaults: ${DEFAULT_LOCALES.join(', ')}
 --base accepts an English JSON file or a Vue/JS file containing items: [...].
+Locale-like JSON files already present in --dir are always included, even when not listed in --locales.
 --spec - reads the change spec from standard input.`);
   process.exit(exitCode);
 }
@@ -43,7 +44,6 @@ function parseArgs(argv) {
     options.faq = Number(options.faq);
     if (!Number.isInteger(options.faq) || options.faq < 1) throw new Error('--faq must be a positive integer');
   }
-  if (options.locale && !options.locales.includes(options.locale)) throw new Error('--locale must be included in --locales');
   options.maxErrors = Number(options.maxErrors);
   if (!Number.isInteger(options.maxErrors) || options.maxErrors < 0) throw new Error('--max-errors must be a non-negative integer');
   return options;
@@ -129,11 +129,22 @@ function makeRecord(filePath, locale = null) {
   return { locale, filePath, ...readDataSource(filePath) };
 }
 
-function loadWorkspace(directory, locales, baseOption) {
+function discoverLocales(directory) {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true })
+    .filter(entry => entry.isFile() && /^[a-z]{2}(?:[-_][a-z]{2})?\.json$/i.test(entry.name))
+    .map(entry => path.basename(entry.name, '.json'))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function loadWorkspace(directory, requiredLocales, baseOption) {
   const records = new Map();
   const errors = [];
   const missingLocales = [];
   const resolvedDirectory = path.resolve(directory);
+  const discoveredLocales = discoverLocales(resolvedDirectory);
+  const extraLocales = discoveredLocales.filter(locale => !requiredLocales.includes(locale));
+  const locales = [...new Set([...requiredLocales, ...discoveredLocales])];
   const basePath = baseOption ? path.resolve(baseOption) : path.join(resolvedDirectory, 'en.json');
   let baseRecord = null;
 
@@ -149,7 +160,7 @@ function loadWorkspace(directory, locales, baseOption) {
   for (const locale of locales) {
     const filePath = path.join(resolvedDirectory, `${locale}.json`);
     if (!fs.existsSync(filePath)) {
-      if (!(locale === 'en' && baseOption)) {
+      if (requiredLocales.includes(locale) && !(locale === 'en' && baseOption)) {
         missingLocales.push(locale);
         errors.push(`Missing locale file: ${filePath}`);
       }
@@ -163,7 +174,7 @@ function loadWorkspace(directory, locales, baseOption) {
   }
 
   if (!baseOption && records.has('en')) baseRecord = records.get('en');
-  return { records, baseRecord, errors, missingLocales, locales };
+  return { records, baseRecord, errors, missingLocales, requiredLocales, discoveredLocales, extraLocales, locales };
 }
 
 function leadingNumber(text) {
@@ -343,6 +354,9 @@ function resultSummary(workspace, errors, maxErrors) {
   return {
     ok: errors.length === 0,
     locales: workspace.locales,
+    requiredLocales: workspace.requiredLocales,
+    discoveredLocales: workspace.discoveredLocales,
+    extraLocales: workspace.extraLocales,
     presentLocales: [...workspace.records.keys()],
     missingLocales: workspace.missingLocales,
     baseline: workspace.baseRecord?.filePath ?? null,
@@ -474,6 +488,9 @@ function main() {
     writtenFiles: options.write ? targetFiles : [],
     variantCount: workspace.locales.length,
     locales: workspace.locales,
+    requiredLocales: workspace.requiredLocales,
+    discoveredLocales: workspace.discoveredLocales,
+    extraLocales: workspace.extraLocales,
     baseline: workspace.baseRecord.filePath,
     faqCountBefore,
     faqCountAfter: validatedWorkspace.baseRecord.data.length,
