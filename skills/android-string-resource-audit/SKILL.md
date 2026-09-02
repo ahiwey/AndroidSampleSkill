@@ -7,9 +7,25 @@ description: Audit, repair, and safely reorder Android `strings.xml` locale reso
 
 Audit first, separate structural gaps from semantic translation gaps, make the smallest safe edits, then verify the same invariants again.
 
+## Fast Path: Known Value-Only Keys
+
+Use this path instead of the full audit when all of these conditions hold:
+
+- The user supplies 1–3 exact keys or an exact wording change, and every target key already exists.
+- The task changes values only; it does not add, delete, rename, or reorder keys or resource references.
+- Placeholders, inline markup, and XML structure are absent or remain unchanged.
+- There is no current evidence of missing or duplicate keys, malformed XML, mojibake, or encoding damage.
+
+For this path:
+
+1. Read the nearest repository rules and use one targeted search to collect only the requested keys across the module's `values*/strings.xml` files.
+2. Apply an XML-aware or tightly scoped value replacement while preserving each file's BOM and newline bytes.
+3. Verify only the requested keys: locale coverage and uniqueness, XML parsing for changed files, unchanged placeholders and inline markup, the exact changed-value set, and `git diff --check`.
+4. Do not run the bundled full audit, sorting, Gradle, or broad repository scans. Escalate to the full workflow if a key is missing or duplicated, XML parsing fails, placeholders or markup change, encoding looks damaged, or the diff contains unrelated edits.
+
 ## Workflow
 
-1. Read the repository and nearest module rules. Identify the target module and its `src/main/res` directory. Do not scan unrelated modules.
+1. If the fast-path conditions hold, complete the Fast Path above and stop. Otherwise, read the repository and nearest module rules, identify the target module and its `src/main/res` directory, and do not scan unrelated modules.
 2. Run the bundled audit without modifying files:
 
    ```powershell
@@ -45,7 +61,9 @@ Audit first, separate structural gaps from semantic translation gaps, make the s
 
 ## Output Expectations
 
-Summarize:
+For the fast path, summarize the requested keys, locale and changed-value counts, focused XML/placeholder/diff results, and any unreviewed translation or runtime risk.
+
+For the full workflow, summarize:
 
 - default, excluded, and translatable key counts;
 - locale count and missing/duplicate/order failures;
