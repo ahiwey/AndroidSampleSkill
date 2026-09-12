@@ -23,6 +23,15 @@ For every sampled task, capture only fields available from the environment:
 - initial request, later user corrections, tool failures, repeated searches or builds;
 - whether the task was analysis-only, Quick, Strict, or an approved plan followed by implementation.
 
+When task history is available as structured data:
+
+- list summaries first, then select the bounded sample;
+- aggregate inside the tool call and emit only the evidence-table fields, status/duration totals, correction signals, and failure counts;
+- never dump raw multi-task histories into the conversation context;
+- deep-read only tasks flagged by corrections, unusually high duration/tool volume, failed turns, or unclear validation, and page older history only when the current page cannot resolve the finding.
+
+Treat non-zero command exits as a proxy until inspected. A search with no matches is not automatically a tool failure or rework.
+
 Classify follow-up turns correctly:
 
 - Count a turn as rework only when an earlier delivery missed the same stated requirement, constraint, or validation target.
