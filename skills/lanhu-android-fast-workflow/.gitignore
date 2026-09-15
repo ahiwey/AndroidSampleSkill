@@ -1,0 +1,5 @@
+node_modules/
+__pycache__/
+*.pyc
+scripts/java-test-*/
+scripts/local-assets-test-*/

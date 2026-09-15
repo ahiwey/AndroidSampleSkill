@@ -1,0 +1,4 @@
+interface:
+  display_name: "蓝湖 Android 快速实现"
+  short_description: "面向几页 UI，复用共用样式，快速完成主要视觉、交互和跳转，按需精修"
+  default_prompt: "使用 $lanhu-android-fast-workflow 实现这组页面的主要 UI、交互与跳转：本地原图和 xxhdpi 切图优先，不调用 MCP，复用共用结构，缺设计的下游页接可返回空页，主要链路轻量验收后交付缺项。"

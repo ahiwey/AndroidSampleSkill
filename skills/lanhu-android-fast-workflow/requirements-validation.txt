@@ -1,0 +1,2 @@
+# Only required for Skill authoring validation, not local asset processing.
+PyYAML==6.0.3

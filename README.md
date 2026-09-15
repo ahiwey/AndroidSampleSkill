@@ -6,6 +6,7 @@
 
 | Skill | 主要功能 | 适用场景 | 详细说明 |
 | --- | --- | --- | --- |
+| `lanhu-android-fast-workflow` | 本地原图与 `xxhdpi` 切图优先，默认不调用 MCP，复用共用布局并完成主要交互、跳转和轻量验收。 | 几页 Android UI 快速实现、状态切换、缺页占位与单点精修。 | [打开文档](./skills/lanhu-android-fast-workflow/README.md) |
 | `multilingual-faq-sync` | 将 FAQ 的增删改按英语结构坐标快速同步到默认 11 个语言 JSON，自动处理编号、占位符和一致性验证。 | `q_cn/q_en` 等 FAQ 多语言维护、批量新增、删除、更新与结构修复。 | [打开文档](./skills/multilingual-faq-sync/README.md) |
 | `android-string-resource-audit` | 审计、补齐并安全排序 Android 多语言 `strings.xml`，检查占位符、编码、乱码和键顺序。 | 缺失翻译、英文回退、批量同步 `values-*`、资源排序。 | [打开文档](./skills/android-string-resource-audit/README.md) |
 | `android-open-source-integration` | 规划并实施可追溯、可访问、可移除且符合许可证要求的 Android 开源代码集成。 | 集成 GitHub Android 项目、页面、资源、依赖或模块。 | [打开文档](./skills/android-open-source-integration/README.md) |
