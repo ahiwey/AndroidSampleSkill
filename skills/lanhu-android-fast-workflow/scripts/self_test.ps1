@@ -17,6 +17,8 @@ Invoke-Checked "node" @((Join-Path $scriptRoot "lanhu_pull.mjs"), "--self-test")
 Invoke-Checked "node" @((Join-Path $scriptRoot "state_map.mjs"), "--self-test")
 Invoke-Checked $Python @((Join-Path $scriptRoot "local_assets.py"), "--self-test", "--work-dir", $scriptRoot)
 & (Join-Path $scriptRoot "visual_qa_router.ps1") -SelfTest
+Invoke-Checked $Python @("-B", "-X", "utf8", "-m", "unittest", "discover", "-s", (Join-Path $scriptRoot "../tests"), "-p", "test_resource_usage.py")
+& (Join-Path $scriptRoot "../tests/image_review_test.ps1") -WorkDirectory $scriptRoot
 
 $testOutput = Join-Path $scriptRoot ("java-test-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $testOutput | Out-Null
