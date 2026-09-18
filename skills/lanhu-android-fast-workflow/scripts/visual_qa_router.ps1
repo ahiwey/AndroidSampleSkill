@@ -4,6 +4,7 @@ param(
     [string]$Scope = "screen",
     [ValidateSet("static", "paparazzi", "device")]
     [string]$Validation = "static",
+    [switch]$StaticChecksCompleted,
     [switch]$DeviceAuthorized,
     [switch]$SelfTest
 )
@@ -22,8 +23,9 @@ function Parse-AdbDevices([string[]]$Lines) {
     return @{ physical = $physical; emulators = $emulators }
 }
 
-function Select-Route([string]$Choice, [bool]$Authorized, [int]$PhysicalCount, [int]$EmulatorCount, [bool]$Paparazzi) {
+function Select-Route([string]$Choice, [bool]$Authorized, [int]$PhysicalCount, [int]$EmulatorCount, [bool]$Paparazzi, [bool]$Ready=$true) {
     if ($Choice -eq "static") { return "static-only" }
+    if (-not $Ready) { return "complete-static-first" }
     if ($Choice -eq "paparazzi") {
         if ($Paparazzi) { return "paparazzi" }
         return "unverified"
@@ -49,14 +51,17 @@ if ($SelfTest) {
     foreach ($case in $cases) {
         if ((Select-Route $case[0] $case[1] $case[2] $case[3] $case[4]) -ne $case[5]) { throw "route case failed" }
     }
-    @{status="ok"; test="visual_qa_router"; cases=$cases.Count+1} | ConvertTo-Json -Compress
+    foreach ($choice in @('paparazzi','device')) {
+        if ((Select-Route $choice $true 1 1 $true $false) -ne 'complete-static-first') { throw 'phase gate failed' }
+    }
+    @{status="ok"; test="visual_qa_router"; cases=$cases.Count+3} | ConvertTo-Json -Compress
     exit 0
 }
 
 $resolved = (Resolve-Path -LiteralPath $ProjectRoot).Path
 $devices = @{ physical=@(); emulators=@() }
 $deviceProbe = $false
-if ($Validation -eq "device" -and $DeviceAuthorized) {
+if ($Validation -eq "device" -and $DeviceAuthorized -and $StaticChecksCompleted) {
     $adb = Get-Command adb -ErrorAction SilentlyContinue
     if ($adb) {
         $deviceProbe = $true
@@ -71,7 +76,7 @@ foreach ($file in $files) {
     if (Select-String -LiteralPath $file -Pattern "paparazzi" -SimpleMatch -Quiet) { $paparazzi = $true }
     if (Select-String -LiteralPath $file -Pattern "roborazzi" -SimpleMatch -Quiet) { $roborazzi = $true }
 }
-$route = Select-Route $Validation ([bool]$DeviceAuthorized) $devices.physical.Count $devices.emulators.Count $paparazzi
+$route = Select-Route $Validation ([bool]$DeviceAuthorized) $devices.physical.Count $devices.emulators.Count $paparazzi ([bool]$StaticChecksCompleted)
 @{
     status="ok"; route=$route; scope=$Scope; mode="quick"; choice=$Validation; device_probe_performed=$deviceProbe
     physical_devices=$devices.physical; connected_emulators=$devices.emulators

@@ -33,6 +33,11 @@ function Get-Digest([string]$Path) {
     try { return ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
     finally { $stream.Dispose(); $sha.Dispose() }
 }
+function Write-Summary($Report,[bool]$Cached,[string]$Manifest) {
+    [ordered]@{status='ok';cached=$Cached;manifest=$Manifest;artifacts=@($Report.artifacts).Count;
+        previews=@($Report.artifacts | ForEach-Object {$_.path});coverage=$Report.coverage;
+        review_status='generated_not_visually_reviewed'} | ConvertTo-Json -Depth 6 -Compress
+}
 function Open-Bitmap([string]$Path) {
     $image = [Drawing.Image]::FromFile($Path)
     try {
@@ -106,13 +111,15 @@ $output = [IO.Path]::GetFullPath($OutputDirectory)
 $sourceDirectory = if (Test-Path -LiteralPath $source -PathType Container) { $source } else { Split-Path -Parent $source }
 if ($output.TrimEnd('\','/') -eq $sourceDirectory.TrimEnd('\','/') -or $output.StartsWith($sourceDirectory.TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'Output must be outside source directory' }
 if ($Mode -eq 'sheet') {
-    $allFiles = @(Get-ChildItem -LiteralPath $source -File | Where-Object { $_.Extension.ToLowerInvariant() -in @('.png','.jpg','.jpeg','.bmp','.gif') } | Sort-Object Name)
+    $directoryFiles = @(Get-ChildItem -LiteralPath $source -File | Sort-Object Name)
+    $allFiles = @($directoryFiles | Where-Object { $_.Extension.ToLowerInvariant() -in @('.png','.jpg','.jpeg','.bmp','.gif') })
+    $skipped = @($directoryFiles | Where-Object { $_.Extension.ToLowerInvariant() -notin @('.png','.jpg','.jpeg','.bmp','.gif') } | ForEach-Object {$_.Name})
     if ($allFiles.Count -eq 0) { throw 'No supported raster files found; WebP/SVG require another decoder' }
     $files = @($allFiles | Select-Object -Skip (($Page-1)*$PageSize) -First $PageSize)
     if ($files.Count -eq 0) { throw 'Page outside file list' }
-} else { $files = @(Get-Item -LiteralPath $source); $allFiles = $files }
+} else { $files = @(Get-Item -LiteralPath $source); $allFiles = $files; $skipped=@() }
 $inputInfo = @($files | ForEach-Object { [ordered]@{path=$_.FullName;sha256=(Get-Digest $_.FullName)} })
-$settings = [ordered]@{mode=$Mode;inputs=$inputInfo;script=(Get-Digest $PSCommandPath);tile_height=$TileHeight;overlap=$Overlap;x=$X;y=$Y;width=$Width;height=$Height;scale=$Scale;page_size=$PageSize;page=$Page;file_count=$allFiles.Count}
+$settings = [ordered]@{mode=$Mode;inputs=$inputInfo;script=(Get-Digest $PSCommandPath);tile_height=$TileHeight;overlap=$Overlap;x=$X;y=$Y;width=$Width;height=$Height;scale=$Scale;page_size=$PageSize;page=$Page;file_count=$allFiles.Count;skipped_files=$skipped}
 $settingsJson = $settings | ConvertTo-Json -Depth 6 -Compress
 $sha = [Security.Cryptography.SHA256]::Create()
 try { $cacheKey = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($settingsJson)))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
@@ -126,7 +133,7 @@ if (Test-Path -LiteralPath $manifestPath) {
             $artifactPath = [IO.Path]::GetFullPath($artifact.path)
             if (-not $artifactPath.StartsWith($runDirectory+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path -LiteralPath $artifactPath) -or (Get-Digest $artifactPath) -ne $artifact.sha256) { $valid=$false; break }
         }
-        if ($valid) { [ordered]@{status='ok';cached=$true;manifest=$manifestPath;artifacts=@($cached.artifacts).Count} | ConvertTo-Json -Compress; exit 0 }
+        if ($valid) { Write-Summary $cached $true $manifestPath; exit 0 }
     } catch { $valid=$false }
 }
 [IO.Directory]::CreateDirectory($runDirectory) | Out-Null
@@ -175,12 +182,17 @@ if ($Mode -eq 'tiles' -or $Mode -eq 'crop') {
                     $graphics.FillRectangle($brush,$cx+5+$side*158,$cy+50,152,125)
                     $graphics.DrawImage($bitmap,[Drawing.Rectangle]::new([int]($cx+5+$side*158+(152-$w)/2),[int]($cy+50+(125-$h)/2),$w,$h))
                 }
-                $regions.Add([ordered]@{id=$id;source=$files[$i].FullName;size=@($bitmap.Width,$bitmap.Height);sheet_cell=@($cx,$cy,$cellW,$cellH);preview_scale=$zoom})
+                $regions.Add([ordered]@{id=$id;source=$files[$i].FullName;sha256=$inputInfo[$i].sha256;size=@($bitmap.Width,$bitmap.Height);sheet_cell=@($cx,$cy,$cellW,$cellH);preview_scale=$zoom})
             } finally { $bitmap.Dispose() }
         }
         $null=Save-Png $sheet ('sheet-{0:D3}.png' -f $Page)
     } finally { $graphics.Dispose();$sheet.Dispose();$font.Dispose();$light.Dispose();$dark.Dispose() }
 }
-$report=[ordered]@{schema_version=1;cache_key=$cacheKey;settings=$settings;regions=@($regions.ToArray());artifacts=@($artifacts.ToArray());note='Review derivatives only; originals unchanged. Not an App screenshot. Sheet previews are not exact color or size measurements.'}
+$pageCount=if($Mode -eq 'sheet'){[int][Math]::Ceiling($allFiles.Count/[double]$PageSize)}else{1}
+$coverage=[ordered]@{supported_files=$allFiles.Count;selected_files=$files.Count;page=$Page;pages=$pageCount;
+    next_page=$(if($Mode -eq 'sheet' -and $Page -lt $pageCount){$Page+1}else{$null});
+    omitted_supported_files=$allFiles.Count-$files.Count;skipped_files=$skipped;regions=$regions.Count;
+    note='Coverage describes generated previews, not human/model inspection. Other sheet pages are not covered by this call.'}
+$report=[ordered]@{schema_version=2;cache_key=$cacheKey;settings=$settings;coverage=$coverage;regions=@($regions.ToArray());artifacts=@($artifacts.ToArray());note='Review derivatives only; originals unchanged. Not an App screenshot. Sheet previews are not exact color or size measurements.'}
 [IO.File]::WriteAllText($manifestPath,($report | ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
-[ordered]@{status='ok';cached=$false;manifest=$manifestPath;artifacts=$artifacts.Count;pages=[int][Math]::Ceiling($allFiles.Count/[double]$PageSize)} | ConvertTo-Json -Compress
+Write-Summary $report $false $manifestPath

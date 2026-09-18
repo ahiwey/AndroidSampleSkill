@@ -9,6 +9,62 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ResourceUsageTest(unittest.TestCase):
+    def test_style_alias_parent_include_and_preview_evidence(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            root = Path(directory)
+            for folder in ('values', 'layout'):
+                (root / folder).mkdir()
+            (root / 'values/ui.xml').write_text(
+                '<resources><color name="named_orange">@color/actual</color>'
+                '<color name="actual">#61B7FF</color>'
+                '<style name="Base"><item name="android:orientation">horizontal</item></style>'
+                '<style name="Score" parent="Base"><item name="android:gravity">end</item></style>'
+                '<color name="cycle_a">@color/cycle_b</color><color name="cycle_b">@color/cycle_a</color></resources>')
+            child = root / 'layout/child.xml'
+            child.write_text('<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/included"/>')
+            layout = root / 'layout/card.xml'
+            layout.write_text('<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" '
+                              'xmlns:tools="http://schemas.android.com/tools" style="@style/Score">\n'
+                              '<!-- @color/named_orange -->\n'
+                              '<TextView android:id="@+id/score" android:textColor="@color/named_orange" tools:textColor="@color/named_orange"/>\n'
+                              '<include layout="@layout/child"/></LinearLayout>')
+            report = MODULE.inspect(['color/named_orange', 'color/cycle_a'], [layout], [root], node_id='score')
+            color = report['resources'][0]
+            self.assertEqual(color['reference_count'], 1)
+            self.assertEqual(color['preview_reference_count'], 1)
+            self.assertEqual(color['resolution']['candidates'][0]['alias']['candidates'][0]['value'], '#61B7FF')
+            parent = report['layouts'][0]['ancestors'][0]
+            self.assertEqual(parent['style_candidates'][0]['attributes']['orientation'], 'horizontal')
+            self.assertEqual(parent['style_candidates'][0]['attributes']['gravity'], 'end')
+            self.assertEqual(report['layouts'][0]['includes'][0]['candidates'][0]['path'], str(child.resolve()))
+            self.assertIn('cycle', str(report['resources'][1]['resolution']))
+
+    def test_external_and_commented_source_references_are_not_local_bindings(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            code = Path(directory) / 'Bind.kt'
+            code.write_text('// R.color.metric\n/* R.color.metric */\nval external = android.R.color.metric\nval actual = R.color.metric\n')
+            self.assertEqual(MODULE.inspect(['color/metric'], [code], [])['resources'][0]['reference_count'], 1)
+
+    def test_ambiguous_style_and_alias_variants_are_not_active_values(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            root = Path(directory)
+            for folder in ('values', 'values-night', 'layout'):
+                (root / folder).mkdir()
+            (root / 'values/ui.xml').write_text('<resources><color name="actual">#123456</color>'
+                '<color name="alias">@color/actual</color>'
+                '<style name="Base"><item name="android:orientation">horizontal</item></style>'
+                '<style name="Derived" parent="Base"><item name="android:textColor">@color/alias</item></style></resources>')
+            (root / 'values-night/ui.xml').write_text('<resources><color name="actual">#ABCDEF</color>'
+                '<style name="Base"><item name="android:orientation">vertical</item></style></resources>')
+            layout = root / 'layout/card.xml'
+            layout.write_text('<TextView style="@style/Derived"/>')
+            node = MODULE.inspect([], [layout], [root])['layouts'][0]['nodes'][0]
+            candidate = node['style_candidates'][0]
+            self.assertTrue(candidate['unresolved'])
+            self.assertNotIn('orientation', candidate['attributes'])
+            alias = candidate['attribute_resources']['textColor']['candidates'][0]['alias']
+            self.assertEqual(alias['candidate_count'], 2)
+
     def test_variants_missing_mapping_and_layout_structure(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
             root = Path(directory)

@@ -40,6 +40,21 @@ try {
     $sheet=& $tool -Mode sheet -SourcePath $inputDir -OutputDirectory $outputDir | ConvertFrom-Json
     $sheetManifest=[IO.File]::ReadAllText($sheet.manifest) | ConvertFrom-Json
     Assert ($sheetManifest.regions[0].source -eq $fixture) 'Sheet lost source mapping'
+    [IO.File]::WriteAllText((Join-Path $inputDir 'unsupported.svg'),'<svg/>')
+    [IO.File]::Copy($fixture,(Join-Path $inputDir 'second.png'))
+    $paged=& $tool -Mode sheet -SourcePath $inputDir -OutputDirectory $outputDir -PageSize 1 | ConvertFrom-Json
+    Assert ($paged.coverage.pages -eq 2 -and $paged.coverage.next_page -eq 2) 'Missing page coverage'
+    Assert ($paged.coverage.omitted_supported_files -eq 1) 'Missing omitted count'
+    Assert ($paged.coverage.skipped_files -contains 'unsupported.svg') 'Mixed unsupported file silently omitted'
+    Assert ($paged.previews.Count -eq 1 -and $paged.review_status -eq 'generated_not_visually_reviewed') 'Misleading review status'
+    $pagedAgain=& $tool -Mode sheet -SourcePath $inputDir -OutputDirectory $outputDir -PageSize 1 | ConvertFrom-Json
+    Assert ($pagedAgain.cached -and $pagedAgain.coverage.next_page -eq 2) 'Cached coverage lost'
+    $lastPage=& $tool -Mode sheet -SourcePath $inputDir -OutputDirectory $outputDir -PageSize 1 -Page 2 | ConvertFrom-Json
+    Assert ($null -eq $lastPage.coverage.next_page) 'Incorrect last-page state'
+    $changed=[Drawing.Bitmap]::new(2,2)
+    try {$changed.Save((Join-Path $inputDir 'second.png'),[Drawing.Imaging.ImageFormat]::Png)}finally{$changed.Dispose()}
+    $changedPage=& $tool -Mode sheet -SourcePath $inputDir -OutputDirectory $outputDir -PageSize 1 | ConvertFrom-Json
+    Assert (-not $changedPage.cached -and $changedPage.manifest -ne $paged.manifest) 'Changed source did not invalidate cache'
     $rejected=$false
     try { $null=& $tool -Mode crop -SourcePath $fixture -OutputDirectory $outputDir -X 79 -Width 2 -Height 2 } catch {$rejected=$true}
     Assert $rejected 'Out-of-bounds crop was accepted'
@@ -47,7 +62,7 @@ try {
     try { $null=& $tool -Mode tiles -SourcePath $fixture -OutputDirectory (Join-Path $inputDir 'nested') } catch {$rejected=$true}
     Assert $rejected 'Output inside input directory was accepted'
     Assert ($original -eq [Convert]::ToBase64String([IO.File]::ReadAllBytes($fixture))) 'Original file changed'
-    Write-Output 'PASS: alpha, sampling, overlapping tiles, crop, sheet mapping, cache reuse/repair, invalid input and original preservation.'
+    Write-Output 'PASS: alpha/DPI, sampling, tiles, crop, sheet mapping/pages/unsupported files, cache reuse/repair/invalidation, invalid input and original preservation.'
 } finally {
     $resolved=[IO.Path]::GetFullPath($work)
     if((Split-Path -Parent $resolved) -ne $root -or (Split-Path -Leaf $resolved) -notlike 'image-review-test-*'){throw 'Unsafe test cleanup path'}
