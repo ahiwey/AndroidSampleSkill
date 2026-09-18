@@ -10,6 +10,11 @@ $outputDir=Join-Path $work 'output'
 [IO.Directory]::CreateDirectory($inputDir) | Out-Null
 function Assert([bool]$Condition,[string]$Message) { if(-not $Condition){throw $Message} }
 try {
+    $capabilities=& $tool -Capabilities | ConvertFrom-Json
+    Assert ($capabilities.page_size.max -eq 24 -and $capabilities.page_size.default -eq 12) 'Incorrect capability limits'
+    $rejected=$false
+    try { $null=& $tool -Mode sheet -SourcePath $inputDir -PageSize 36 } catch {$rejected=$true}
+    Assert $rejected 'Invalid page size accepted'
     $fixture=Join-Path $inputDir 'transparent-fixture.png'
     $bitmap=[Drawing.Bitmap]::new(80,350,[Drawing.Imaging.PixelFormat]::Format32bppArgb)
     $bitmap.SetResolution(144,144)

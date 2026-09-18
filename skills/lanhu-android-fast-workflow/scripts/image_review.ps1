@@ -1,6 +1,7 @@
 param(
-    [Parameter(Mandatory=$true)][ValidateSet('tiles','sheet','crop','inspect')][string]$Mode,
-    [Parameter(Mandatory=$true)][string]$SourcePath,
+    [Parameter(Mandatory=$true,ParameterSetName='Review')][ValidateSet('tiles','sheet','crop','inspect')][string]$Mode,
+    [Parameter(Mandatory=$true,ParameterSetName='Review')][string]$SourcePath,
+    [Parameter(Mandatory=$true,ParameterSetName='Capabilities')][switch]$Capabilities,
     [string]$OutputDirectory,
     [ValidateRange(128,2048)][int]$TileHeight = 1600,
     [ValidateRange(0,512)][int]$Overlap = 120,
@@ -11,6 +12,10 @@ param(
     [string]$Points = ''
 )
 $ErrorActionPreference = 'Stop'
+if ($Capabilities) {
+    @{modes=@('tiles','sheet','crop','inspect');page_size=@{min=1;max=24;default=12};page_min=1;read_only=$true} | ConvertTo-Json -Compress
+    return
+}
 Add-Type -AssemblyName System.Drawing
 if (-not ('ReviewAlphaBounds' -as [type])) {
     Add-Type -TypeDefinition @'
