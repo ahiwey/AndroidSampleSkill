@@ -30,7 +30,9 @@ llvm-readelf -l <SO>
 adb shell getconf PAGE_SIZE
 ```
 
-Expected AAB metadata and ELF/runtime details must follow the live 16 KB guide; keep raw reports as evidence.
+Expected AAB metadata and ELF/runtime details must follow the live 16 KB guide; keep raw reports as evidence. Run `python scripts/inspect-native.py <artifact>` for scoped baseline LOAD checks, or add `--mode release` for 64-bit RELRO checks. Neither replaces ZIP, AAB metadata or runtime checks. ARMv7 4 KB alignment is inventory-only and must not produce a recurring warning or blocker.
+
+Select device/manual rows proportional to the requested baseline. A basic adaptation does not inherit every full-release gate below. Known 64-bit risks remain documented; deferred checks are not PASS.
 
 ## Device matrix
 
@@ -78,7 +80,8 @@ Critical operation obscured by insets/IME, back navigation corrupts or exits wor
 - merged manifest and resolved dependencies reviewed
 - Android 16 phone critical path has no known P0/P1
 - edge-to-edge and back-navigation evidence present
-- every delivered native ABI passes final-artifact and runtime gates, or release is `BLOCKED`
+- shipped arm64-v8a/x86_64 libraries pass applicable 16 KB LOAD/RELRO, packaging and runtime gates; legacy ABI support is preserved without requiring ARMv7 16 KB alignment
+- real native crashes or reduced ABI coverage block release regardless of ABI; static checks alone never certify Play approval
 - exported/intent/provider audit has no untreated high-risk finding
 - each conditional surface has completion or `NOT_APPLICABLE` evidence
 - temporary large-screen exception, if any, is proven and time-bounded

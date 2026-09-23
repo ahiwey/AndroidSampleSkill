@@ -21,6 +21,7 @@ Use an evidence-first workflow. Audit before editing, implement only applicable 
 4. Identify product type before applying Play policy: phone/tablet, Wear OS, TV, Automotive, or XR.
 5. Record app module, variants, min/compile/target SDK, AGP, Gradle, JDK, UI stack, native code, BLE, LAN, health, media, background work, release channel, and available devices.
 6. Ask only for a missing choice that materially changes implementation or acceptance. Discover facts from the repository first.
+7. Default implementation delivers the agreed API 36 adaptation baseline, not a full Play release audit. Preserve a user-selected prior-project level; do not expand it or repeatedly reopen accepted ARMv7 support. Keep known in-scope defects and unverified runtime evidence honest.
 
 For policy or tool-version claims, re-check the official sources in [references/official-baseline.md](references/official-baseline.md). Treat dates and minimum versions as time-sensitive.
 
@@ -48,6 +49,10 @@ Start with a table containing item, status, evidence/count, primary files, risk,
 ## 3. Implement Stage A: API 36 release baseline
 
 Read the detailed acceptance checklist in [references/audit-checklist.md](references/audit-checklist.md), then work in the following order.
+
+### Dependency and SDK preflight
+
+Before implementation, read [references/library-and-sdk-recipes.md](references/library-and-sdk-recipes.md). Inventory resolved AAR/JAR/native dependencies and SDK sources, inspect the bundled candidate catalog, then decide KEEP / REPLACE / REBUILD_FROM_SOURCE / PATCH_SDK_SOURCE from concrete evidence. Never copy a known-case binary or SDK patch solely by filename. The catalog, candidate AAR, reproduction script and BLE state/event recipe are reusable inputs with explicit applicability and verification limits.
 
 ### Build baseline
 
@@ -86,10 +91,12 @@ Read the detailed acceptance checklist in [references/audit-checklist.md](refere
 ### 16 KB native libraries
 
 - Always audit final APK/AAB if any direct or transitive `.so` exists; source-tree checks are insufficient.
-- Check every delivered ABI for APK ZIP alignment, AAB page-alignment metadata, ELF `LOAD` alignment, and runtime loading on a 16 KB device.
+- Inventory every delivered ABI; apply 16 KB ELF acceptance to `arm64-v8a` / `x86_64`. Check final APK ZIP alignment, AAB metadata and in-scope 16 KB runtime loading separately.
+- Preserve `armeabi-v7a` at its existing support baseline. A 4 KB ARMv7 `.so` alone is not a warning or blocker: do not request replacements, waivers or repeat reminders. Only report actual runtime failures, reduced coverage or an explicitly stricter user contract.
+- Use `scripts/inspect-native.py` for baseline LOAD/hash inspection; release mode additionally checks RELRO. A LOAD pass does not prove complete native compatibility or Play approval. Preserve known 64-bit risks in the evidence.
 - Rebuild owned native code with a supported toolchain or obtain compatible prebuilts from the supplier. Without source, do not claim Gradle flags or binary patching as a formal fix.
 - Do not silently remove 32-bit or 64-bit ABIs; changing device coverage is a release decision.
-- Compatibility mode is not formal acceptance. An incompatible delivered `.so` is a release blocker even if remediation is tracked separately.
+- Compatibility mode is not formal acceptance. A demonstrated incompatible in-scope 64-bit library blocks full native/release acceptance; the accepted legacy ARMv7 baseline does not. Distinguish scoped baseline completion from complete release readiness.
 
 ### Temporary large-screen strategy
 

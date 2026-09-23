@@ -104,7 +104,7 @@ $checks = @(
     [pscustomobject]@{
         Name = 'Native code and ABI configuration'
         Why = 'Identify native inputs; formal 16 KB acceptance still requires final APK/AAB inspection.'
-        Patterns = @('jniLibs', 'externalNativeBuild', 'ndkVersion', 'abiFilters', 'System\.loadLibrary', 'ReLinker')
+        Patterns = @('jniLibs', 'externalNativeBuild', 'ndkVersion', 'abiFilters', 'System\.loadLibrary', 'ReLinker', 'fileTree', '\.aar', '\.jar', 'duktape', 'rtk-')
     }
 )
 
@@ -148,14 +148,16 @@ foreach ($check in $checks) {
 }
 
 $nativeFiles = @($repositoryFiles | Where-Object { $_.Extension.ToLowerInvariant() -eq '.so' })
-$archiveFiles = @($repositoryFiles | Where-Object { $_.Extension.ToLowerInvariant() -in @('.aar', '.apk', '.aab') })
+$archiveFiles = @($repositoryFiles | Where-Object { $_.Extension.ToLowerInvariant() -in @('.aar', '.jar', '.apk', '.aab') })
 
 $lines.Add('## Native artifacts present in the repository')
 $lines.Add('')
 $lines.Add("- Direct `.so` files outside excluded directories: $($nativeFiles.Count)")
-$lines.Add("- AAR/APK/AAB files outside excluded directories: $($archiveFiles.Count)")
+$lines.Add("- AAR/JAR/APK/AAB files outside excluded directories: $($archiveFiles.Count)")
 $lines.Add('- These counts do not replace resolved-dependency or final-output inspection for ABI and 16 KB compatibility.')
 $lines.Add('')
+$lines.Add('- Before changing libraries or SDK code, apply references/library-and-sdk-recipes.md and inspect exact inputs with scripts/inspect-native.py.')
+$lines.Add('- Default 16 KB ELF gate: arm64-v8a/x86_64. ARMv7 4 KB is inventory only; preserve support without warnings or blocker escalation.')
 $lines.Add('## Required next output')
 $lines.Add('')
 $lines.Add('Classify each section as `MUST_FIX`, `CONDITIONAL`, `NOT_APPLICABLE`, `DONE`, `BLOCKED`, or `NOT_VERIFIED`, and attach evidence for that classification.')

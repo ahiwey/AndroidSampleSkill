@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "lastVerified": "2026-09-23",
+  "defaultAbiPolicy": "64-bit 16 KB checks; preserve ARMv7 baseline without warnings solely for 4 KB LOAD alignment",
+  "entries": [
+    {
+      "id": "duktape-android-1.2.0-baseline",
+      "action": "CONDITIONAL_CANDIDATE",
+      "coordinate": "com.squareup.duktape:duktape-android:1.2.0",
+      "originalSha256": "0391c309957be03b27a7805bba6f978f07258ec49093c8ddee2e4215e9cf8ec2",
+      "asset": "assets/libraries/duktape-android-1.2.0-16k.aar",
+      "sha256": "25b92cb6008db807f941feb2e0a6d242ccc327601544252160d978f6fb94a3fa",
+      "classesJarSha256": "9a25958a95caf49204042835719d94ca01eb1c9881e521c443bf13f64d03d177",
+      "minimumAppSdk": 26,
+      "preservedAbis": [
+        "armeabi",
+        "armeabi-v7a",
+        "arm64-v8a",
+        "x86",
+        "x86_64",
+        "mips",
+        "mips64"
+      ],
+      "upstream": "https://github.com/cashapp/duktape-android",
+      "commit": "93d6b86cae63f0dd020bdea1f24f07119cbdec25",
+      "licenses": "Apache-2.0 wrapper and MIT engine; source/notices embedded in the AAR",
+      "verification": [
+        "All 7 ELF LOAD checks pass",
+        "Original Java classes preserved",
+        "API 36 x86_64 16 KB JNI bridge: Unicode, number, callbacks/proxy, date, exception recovery, close/recreate; compatibility disabled"
+      ],
+      "limitations": [
+        "ARM64 RELRO end remainder 4096; ARM64 16 KB runtime unverified",
+        "Not an automatic full-release fix",
+        "Do not use if minSdk < 26, original hash differs, ABI set/API/STL conflict or equivalent fix already exists"
+      ]
+    },
+    {
+      "id": "rtk-bbpro-1.15.0-reference",
+      "action": "KEEP_FOR_ACCEPTED_BASELINE",
+      "originalSha256": "6a7c6502180ef016f6052579ab70ecb9e751bc15093da81e16bc23bda36fe94b",
+      "asset": null,
+      "notes": [
+        "No RTK AAR/JAR was replaced or bundled",
+        "ARMv7 libDspConfig.so 4096 LOAD alignment is accepted legacy support, not a warning",
+        "ARM64 LOAD 16384; RELRO/runtime concerns remain a separate release-readiness question"
+      ]
+    }
+  ]
+}

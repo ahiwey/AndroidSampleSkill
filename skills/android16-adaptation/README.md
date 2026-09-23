@@ -49,7 +49,8 @@
 - 系统栏与窗口：edge-to-edge、状态栏、导航栏、刘海、IME 和手势区域。
 - 返回行为：预测性返回、页面业务语义和生命周期状态。
 - 条件能力：后台任务、BLE、局域网、健康权限、Intent、媒体、文本和无障碍。
-- 原生代码：最终制品内每个 ABI 的 ZIP、AAB 元数据、ELF 对齐和 16 KB 设备加载。
+- 依赖与 SDK：先核对 AAR/JAR 版本、哈希、Java API、ABI 和实际问题，再决定保留、替换、源码重建或 SDK 补丁。
+- 原生代码：最终制品的 ZIP、AAB 元数据及 arm64-v8a/x86_64 的 16 KB 检查；ARMv7 保持既有支持，单纯 4 KB 对齐不提醒、不阻塞。
 - 大屏：方向/宽高比限制、响应式布局、折叠状态和窗口重建。
 - 独立迁移：只有证据证明项目使用 Google Fit 时，才规划 Health Connect 迁移。
 
@@ -69,6 +70,17 @@
   -ProjectRoot "<Android项目路径>" `
   -AppModule "app"
 ```
+
+## 可复用库与 SDK 配方
+
+[库与 SDK 预检配方](./references/library-and-sdk-recipes.md)和[候选清单](./references/library-catalog.json)记录来源、哈希、minSdk、ABI、已验证范围及限制。附带本次 Duktape AAR、可复现重建脚本和 BLE 状态事件修改配方；没有 JAR 替换，也不包含私有 RTK SDK。候选 AAR 的 ARM64 RELRO/运行限制明确保留，不能按文件名自动视为完整 16 KB 修复。
+
+```powershell
+python .\skills\android16-adaptation\scripts\inspect-native.py <AAR或JAR或APK或AAB>
+# 仅完整发布检查时追加 --mode release；默认 ARMv7 只记录原始测量。
+```
+
+基础适配与完整 Google Play 上架审核分开验收，不因扩大检查而反复改变已确认的交付范围。
 
 ## 测试清单
 

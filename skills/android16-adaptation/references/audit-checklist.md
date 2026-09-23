@@ -124,12 +124,12 @@ Health permission needs depend on actual APIs and data types. A write-only Healt
 System.loadLibrary | ReLinker | local AAR | local JAR
 ```
 
-Inspect resolved AARs and final APK/AAB. For each delivered ABI record library path, ELF result, supplier/source ownership, runtime feature, and remediation status.
+Inspect resolved AAR/JAR inputs and final APK/AAB. For each delivered ABI record library path, raw ELF measurements, supplier/source ownership, runtime feature, acceptance scope and remediation status. A Java-only JAR needs no native rebuild. Match candidate hashes and prerequisites before changes; identical supplier binaries stay unchanged.
 
 ## Android 16-specific decision reminders
 
 - Edge-to-edge and predictive back are target-36 behaviors; all-app changes must also be reviewed.
 - `PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY` is a temporary Stage A escape hatch, not an adaptive-layout fix, and does not apply when targeting API 37.
 - Android 16 local-network protection is exercised with the documented compat flow; future permission behavior must be rechecked before implementation.
-- A single missing 16 KB-compatible delivered ABI blocks formal native acceptance. Supporting both 32-bit and 64-bit requires compatible native libraries for every ABI actually shipped.
+- Apply the 16 KB native gate to delivered arm64-v8a/x86_64 libraries. Preserve ARMv7 support: 4 KB alignment alone is inventory, not a warning or blocker. Real runtime/ABI coverage regressions still require action. Read library-and-sdk-recipes.md before replacing dependencies or patching SDK sources.
 - Reflection and third-party SDK behavior need graceful failure and supplier evidence; absence of a static crash does not prove OEM compatibility.

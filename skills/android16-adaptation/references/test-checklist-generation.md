@@ -54,7 +54,7 @@ For the enhanced version, split at least along these dimensions when applicable:
 - foreground, background, killed process, reboot, offline, weak network, Doze, and standby buckets;
 - Pixel/reference device, each agreed major OEM, 4 KB and 16 KB, minimum API, tablet, foldable, and freeform/split-screen;
 - BLE bond states and key-loss/encryption events; LAN allow/deny/revoke/socket failure/recovery states;
-- each shipped ABI and each native-backed feature;
+- each shipped ABI and each native-backed feature at its accepted support level; 16 KB checks target arm64-v8a/x86_64, while ARMv7 keeps its existing baseline without repeated 4 KB warnings;
 - happy path, cancellation, timeout, interruption, recovery, and repeated-operation behavior for critical transfers or upgrades.
 
 ## Output contract

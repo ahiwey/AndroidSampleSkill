@@ -59,8 +59,10 @@ The final conversational handoff should also include:
 | 风险 | 原因 | 建议下一步 | 发布影响 |
 ```
 
+Decision rules apply to the agreed task scope. Baseline adaptation completion is not full release readiness. Do not turn unchanged ARMv7 4 KB measurements into warnings, blockers or recurring reminders; report only actual regressions or an explicitly stricter contract. Known 64-bit risks remain in the scoped evidence.
+
 Decision rules:
 
 - `PASS`: required automated, final-artifact, emulator/device, and agreed manual checks have proof; no open release blocker.
 - `PASS_WITH_RISKS`: code/build work is complete but non-blocking manual, OEM, peripheral, account, or operational proof remains.
-- `BLOCKED`: a required artifact, P0/P1, release gate, or external dependency is unresolved.
+- `BLOCKED`: an in-scope required artifact, P0/P1, explicitly requested release gate, or external dependency is unresolved. A deferred expanded audit is not itself a baseline blocker.

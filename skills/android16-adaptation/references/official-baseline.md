@@ -23,7 +23,7 @@ As verified on the date above, Google Play requires phone/tablet new apps and ap
 
 ## Packaging, native code, and health
 
-- [Support 16 KB page sizes](https://developer.android.com/guide/practices/page-sizes)
+- [Support 16 KB page sizes](https://developer.android.com/guide/practices/page-sizes): page-size scope rechecked 2026-09-23: Play requirement concerns 64-bit devices; the guide names arm64-v8a/x86_64 for ELF checks and includes RELRO in native verification. Do not demand ARMv7 16 KB alignment as a default. This date applies only to this source, not all sources above.
 - [Migrate from Google Fit to Health Connect](https://developer.android.com/health-and-fitness/health-connect/migration/fit)
 - [Health Connect permissions](https://developer.android.com/health-and-fitness/guides/health-connect/plan/data-types)
 
