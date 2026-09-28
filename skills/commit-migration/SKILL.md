@@ -35,7 +35,7 @@ Treat requests like these as triggers:
 2. Read target rules, query its index, and load auto-discovered mapping hints.
 3. Snapshot target dirty files and run one structured preflight dossier.
 4. Resolve mapping, protected-path, merge-only, dirty-target, and name-collision rows before editing.
-5. Read long source files in bounded slices and apply equivalent changes in the target repository.
+5. Read long source files in bounded slices and apply equivalent changes in the target repository, including required ProGuard/R8 rule adaptation and build configuration wiring (see [obfuscation rule adaptation](./references/android-checklist.md#obfuscation-rule-adaptation)).
 6. Validate in the order static checks → compile → focused tests → assemble.
 7. Run the Android follow-up checklist before claiming completion.
 
@@ -94,7 +94,7 @@ Always consider:
 - reflection strings
 - routing strings
 - serialization model names
-- Proguard or R8 class references
+- ProGuard/R8 rules, mapped class/member references, and module/variant rule-file wiring
 - target dirty-file collisions
 - protected and merge-only paths from repository hints
 - source brand/package tokens that must not remain
