@@ -14,6 +14,7 @@
 | `commit-migration` | 将提交、分支或另一仓库中的指定文件等价迁移到当前 Android 分支，并适配包名、资源和 Manifest。 | 跨分支、跨品牌或跨仓库移植改动。 | [打开文档](./skills/commit-migration/README.md) |
 | `optimize-agent-workflow` | 从近期任务证据中定位返工、耗时和 Token 浪费，并安全改进规则、Prompt 与工作流。 | 智能体任务复盘、持续优化、规则治理。 | [打开文档](./skills/optimize-agent-workflow/README.md) |
 | `reasoning-playbooks` | 展示、选择并执行 12 种常用推理与决策方法。 | 概念解释、事实核查、方案比较、系统调研和最小实验。 | [打开文档](./skills/reasoning-playbooks/README.md) |
+| `android-r8-release-audit` | 审计与修复 R8 优化、混淆、代码/资源缩减和保留规则，分阶段验证产物与运行路径。 | Release 优化、ProGuard/consumer rules 排查、反射与序列化异常。 | [执行流程](./skills/android-r8-release-audit/SKILL.md) |
 
 独立项目 [AndroidEasyRules](https://github.com/ahiwey/AndroidEasyRules) 仍以其原仓库为准，本仓库只提供链接，不重复收录。
 

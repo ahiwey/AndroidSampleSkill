@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android R8 发布审计"
+  short_description: "核验 R8 优化、混淆、缩减与保留规则，并分阶段验证产物和真机"
+  default_prompt: "使用 $android-r8-release-audit 检查当前项目的 R8 优化、混淆、代码与资源缩减及保留规则，按已授权范围修复，并报告产物和运行验证证据。"
