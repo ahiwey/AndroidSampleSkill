@@ -2,6 +2,8 @@
 
 面向 Android 工程与智能体协作流程的可复用 Codex Skills 集合。本仓库只收录由 [ahiwey](https://github.com/ahiwey) 编写和维护的 Skill，不包含本机 Codex 环境中安装的第三方 Skill。
 
+仓库维护版本：`0.1.0`（[VERSION](./VERSION)）。AndroidEasyRules 使用其独立版本号。
+
 ## Skills 一览
 
 | Skill | 主要功能 | 适用场景 | 详细说明 |
@@ -16,7 +18,7 @@
 | `reasoning-playbooks` | 展示、选择并执行 12 种常用推理与决策方法。 | 概念解释、事实核查、方案比较、系统调研和最小实验。 | [打开文档](./skills/reasoning-playbooks/README.md) |
 | `android-r8-release-audit` | 审计与修复 R8 优化、混淆、代码/资源缩减和保留规则，分阶段验证产物与运行路径。 | Release 优化、ProGuard/consumer rules 排查、反射与序列化异常。 | [执行流程](./skills/android-r8-release-audit/SKILL.md) |
 
-独立项目 [AndroidEasyRules](https://github.com/ahiwey/AndroidEasyRules) 仍以其原仓库为准，本仓库只提供链接，不重复收录。
+独立项目 [AndroidEasyRules](https://github.com/ahiwey/AndroidEasyRules) 仍以其原仓库为准，本仓库只提供链接，不重复收录。 Android 分流、布局修复与验证 Skill [android-fast-workflow](https://github.com/ahiwey/AndroidEasyRules/blob/main/plugins/android-easy-rules/skills/android-fast-workflow/SKILL.md) 也在该仓库维护。
 
 ## 安装
 
