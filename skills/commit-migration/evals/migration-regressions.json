@@ -1,0 +1,124 @@
+{
+  "skill": "commit-migration",
+  "date": "2026-10-20",
+  "evaluation_mode": "Offline decision review with synthetic fixtures; not an independent model run or Android runtime test.",
+  "instructions": "Read each request and raw fixture facts, then decide scope, tool route, edits and verification. Judge observable decisions against expected outcomes. Do not grade by matching wording in SKILL.md. Live repositories, devices, network calls and dependency installation are outside these fixtures.",
+  "cases": [
+    {
+      "id": "quick-cross-day-fix",
+      "request": "直接参考源项目修复当前小睡跨午夜日期，只改这个解析方法，不用编译。",
+      "fixtures": {
+        "source": "NapParser.java subtracts one date from the start/segment date when start minute exceeds end minute; end date remains the selected date.",
+        "target": "The same method lacks this condition. Same-day naps already work. Unrelated profile files have user edits.",
+        "examples": [
+          {"selected_end_date": "2026-10-20", "start": "23:00", "end": "01:00", "expected_start_date": "2026-10-19", "expected_end_date": "2026-10-20"},
+          {"selected_end_date": "2026-10-20", "start": "13:00", "end": "14:00", "expected_start_date": "2026-10-20", "expected_end_date": "2026-10-20"}
+        ]
+      },
+      "expected_outcomes": [
+        "Use Quick scope: compare the method and actual date consumers, make a bounded patch and preserve unrelated dirty files.",
+        "Check cross-day and same-day behavior against the examples; report static evidence without claiming executable tests ran.",
+        "Do not create a full feature dossier, run Gradle/device probes or ask for the already supplied implementation approval."
+      ]
+    },
+    {
+      "id": "tools-unavailable",
+      "request": "先给方案：把本地源仓的 ReminderFragment 迁移到目标项目，保留现有页面入口。",
+      "fixtures": {
+        "capabilities": "No migration MCP tools are exposed; importlib.util.find_spec('commit_migration') returns None in the selected existing interpreter. Git, rg, Python XML and hash tools are available.",
+        "source": "Clean local source HEAD S, selected ReminderFragment.kt and its layout; it imports an existing ReminderSettings model.",
+        "target": "Different package root, existing ReminderActivity entry; shared strings.xml has an unrelated user edit. No additional virtualenv is specified."
+      },
+      "expected_outcomes": [
+        "After one capability probe, use scoped Git/rg, file reads, hashes and XML inspection to prepare an equivalent mapping and dependency matrix.",
+        "Identify host and dirty-resource merge needs, preserve the target entry and stop at a reviewable plan.",
+        "Do not repeat missing-module commands, claim MCP/dossier execution, install a tool, modify files or compile during plan-only work."
+      ]
+    },
+    {
+      "id": "encoding-and-user-hunks",
+      "request": "迁移录音新增提示的中英文文案，保留当前未提交的设置文案。已确认实施，仅静态检查。",
+      "fixtures": {
+        "source_values": {"record_resume": "继续转写", "record_remaining": "剩余 %1$d 秒"},
+        "target_bytes": "UTF-8 BOM, CRLF, valid XML; existing settings_title was changed by the user to 设置与通知. Existing target locales are default and zh-rCN only.",
+        "trap": "A terminal round trip can produce valid XML containing mojibake; restoring strings.xml to HEAD would discard settings_title."
+      },
+      "expected_outcomes": [
+        "Patch only required resource entries, preserve the user value, BOM and CRLF, and preserve the integer placeholder type/index.",
+        "Inspect actual resulting Unicode values and byte conventions as well as XML parsing and changed-key coverage.",
+        "Do not restore or transcode the entire resource file, add source-only locales, sort unrelated keys or start a build."
+      ]
+    },
+    {
+      "id": "api-and-legacy-data",
+      "request": "迁移 AI V2 数据逻辑，保留目标 UI 和旧报告，数据库按目标升一级，能量评分不引入。确认实施，可用现有聚焦测试，不做设备验证。",
+      "fixtures": {
+        "source": "Source Room version 51; V2 endpoint uses a JSON-array health field and reflection-based ReportV2 model serialization. Source also has energy score UI.",
+        "target": "Target Room version 7, historical AI report preferences and a legacy ReportV1 table. ReportV2 needs a new table. A rule file exists under a customized filename wired to the minified app variant; existing dependency consumer rules must be checked.",
+        "legacy_values": ["[0, 96, 98]", "[]", "", "malformed"],
+        "constraints": "No clearing app data, enabling shrinking, new dependency or source version-number copy."
+      },
+      "expected_outcomes": [
+        "Define API/model/serializer adaptation, JSON-array parsing and the handling of empty/malformed legacy values, with meaningful existing-framework fixtures.",
+        "Use target version 8, a registered nondestructive 7-to-8 migration and schema/default/nullability checks; distinguish historical data from new cache eligibility.",
+        "Preserve UI and old reports, exclude energy score, inspect relevant existing/consumer R8 rules and add only missing mapped rules to an actually loaded file.",
+        "Report the actual scope of test/static evidence; do not claim release/runtime coverage from debug tests or perform device actions."
+      ]
+    },
+    {
+      "id": "fragment-host-restoration",
+      "request": "把四个录音 Fragment 放到现有 Activity，宿主使用自己的标题栏，Fragment 独立使用时显示自己的标题栏，保留目标 tint，暂不接 MainActivity。",
+      "fixtures": {
+        "mapping": "Explicit hints map RecordingListFragment to ui/mt/RecordingListActivity; ui/device/record/RecordListActivity is protected and unrelated despite the similar spelling.",
+        "target": "The Activity has new ImageTintList behavior and a stable FragmentContainerView ID. FragmentManager may already restore a Fragment with its saved tag.",
+        "source": "Fragments observe async data and own view binding and callbacks; source package and helper signatures differ."
+      },
+      "expected_outcomes": [
+        "Use explicit mapping and preserve the protected near-name Activity and target tint.",
+        "Define toolbar owner/actions by host, reuse restored Fragment instances, map ViewModel scope and use view-lifecycle cleanup for bindings/observers/callbacks.",
+        "Do not add duplicate Fragments after recreation, wire MainActivity, copy helpers without signature checks or claim host interaction from static checks."
+      ]
+    },
+    {
+      "id": "selected-commits-and-exclusions",
+      "request": "按 C2、C1 两个提交迁移全部录音修改，包括混淆；不要身体电量卡片。目标已有更晚的 Wi-Fi 恢复实现。",
+      "fixtures": {
+        "git": "C1 is a parent of C2. The selected set is exactly C1 and C2. C1 adds recording owner isolation and an unrelated home card. C2 depends on C1 for transcript continuation; a shared ViewModel contains both topics.",
+        "target": "Existing Wi-Fi queue/recovery logic is newer and user-modified. A source R8 selector references the old package. Build version and signing differ."
+      },
+      "expected_outcomes": [
+        "Resolve exact SHAs, explain dependency order C1 then C2, and migrate all selected recording behavior rather than silently reducing it to preferred fixes.",
+        "Filter unrelated hunks even within shared files, preserve newer target/user recovery behavior, and map the required R8 selectors and wiring.",
+        "Do not include intervening/unselected history, source card, version/signing changes, raw cherry-pick or blanket source file replacement."
+      ]
+    },
+    {
+      "id": "settings-refresh-and-request-state",
+      "request": "继续修复：12/24小时切换后部分图表没刷新；另外 AI 请求经常重试，先查证给方案。",
+      "fixtures": {
+        "settings": "The preference changes successfully, but two visible chart consumers cache formatted labels. Fixed daily timelines and dynamic sleep timelines have different endpoint semantics.",
+        "requests": "Logs include one failed and one successful attempt within a single logical request. Attempt callbacks are currently also counted as request completion; no evidence yet identifies a timeout defect.",
+        "phase": "Read-only diagnosis and plan; no new implementation or device authorization."
+      },
+      "expected_outcomes": [
+        "Inspect latest logs/current diff and preference-to-consumer refresh paths, retaining the approved timeline semantics rather than guessing label endpoints.",
+        "Build a small state/event/output matrix, distinguish logical request versus attempt completion and compare correlated redacted inputs.",
+        "Propose the narrow repair and verification boundary; do not tune timeout/retry parameters without evidence, expose credentials or perform writes/devices in plan-only scope."
+      ]
+    },
+    {
+      "id": "resume-and-validation-boundaries",
+      "request": "继续按已确认的方案完成迁移，保留源项目被注释的识别代码。本次不编译，视觉验证也跳过。",
+      "fixtures": {
+        "approved_state": "Source fixed at S with file hashes; include/exclude matrix already approved. Static XML and diff checks passed for the first patch; no APK was built or installed. Two remaining call sites are recorded.",
+        "current_diff": "Source hashes and prior target hunks are unchanged; an unrelated target file has a new user edit. Source identification code is commented out intentionally.",
+        "prior_sessions": "Another chat had device permission; a previous final marker here contained only a plan."
+      },
+      "expected_outcomes": [
+        "Recheck relevant fingerprints/diff and complete only remaining call sites within the approved boundary; do not redo full discovery or reconfirm unchanged approval.",
+        "Preserve commented identification state and unrelated user edits, and run proportional static checks for the new changes.",
+        "Report static completion, unperformed build/install/visual/runtime stages and exact remaining gaps; do not inherit another chat's device permission or treat the earlier plan marker as implementation."
+      ]
+    }
+  ]
+}

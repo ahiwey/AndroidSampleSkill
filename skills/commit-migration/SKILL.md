@@ -1,11 +1,11 @@
 ---
 name: commit-migration
-description: Analyze and port Android changes from commits, branches, or another local repository into the current branch with package, class, path, manifest, XML, resource, and target-working-tree-aware adaptation. Use whenever the user asks to apply or migrate commits, ranges, branch changes, brand-fork behavior, or explicit Activity/Fragment/file sets from another Android repository.
+description: Port selected Android commits, branch features, or code from another local repository into the current branch, adapting behavior, dependencies, data and target customizations. Use for applying commits, brand-fork synchronization, Activity/Fragment transfers, or implementing a feature or fix from a reference Android project. Ordinary in-project edits and Git-history-only operations do not need this workflow.
 ---
 
 # Commit Migration
 
-Use this skill for Android repositories when the user wants to port code changes from a Git selection or an explicit file set in another local repository.
+Port the selected behavior into the target architecture. A request to follow another Android project can be a small equivalent fix or a complete feature migration; choose the smallest sufficient workflow.
 
 ## Default behavior
 
@@ -13,9 +13,9 @@ Use this skill for Android repositories when the user wants to port code changes
 - Never modify the source branch by default.
 - Do not automatically `checkout`, `cherry-pick`, or `rebase`.
 - Prefer equivalent migration plus Android-aware adaptation over raw patch replay.
-- Pause only when mapping confidence is low or current-branch custom behavior would be overwritten.
 - Treat every pre-existing target working-tree change as user-owned.
-- Honor user-requested interview and plan-approval checkpoints before implementation.
+- Respect requested interview, plan-only, no-build and validation boundaries. Reuse approval already given for the same scope; resolve only new uncertainty, conflicts or protected-path requirements.
+- Preserve source comments or disabled code when explicitly requested; copying a disabled capability does not authorize enabling it.
 
 ## Supported user phrasing
 
@@ -28,31 +28,32 @@ Treat requests like these as triggers:
 - `Apply the latest 3 commits from branch X to the current branch`
 - `Bring this branch's changes into the current Android branch`
 - `Move these Activities or Fragments from D:\SourceApp into this app`
+- `参考另一个 Android 项目的实现，修复当前逻辑`
+- `迁移这个功能，保留当前 UI 和主题，先给方案`
 
-## Execution order
+## Choose the scope
 
-1. Parse the selector: Git selection or local repository file set.
-2. Read target rules, query its index, and load auto-discovered mapping hints.
-3. Snapshot target dirty files and run one structured preflight dossier.
-4. Resolve mapping, protected-path, merge-only, dirty-target, and name-collision rows before editing.
-5. Read long source files in bounded slices and apply equivalent changes in the target repository, including required ProGuard/R8 rule adaptation and build configuration wiring (see [obfuscation rule adaptation](./references/android-checklist.md#obfuscation-rule-adaptation)).
-6. Validate in the order static checks → compile → focused tests → assemble.
-7. Run the Android follow-up checklist before claiming completion.
+- **Quick:** Known files and a bounded equivalent fix, resource update or value change. Read the source behavior, target call sites and intersecting dirty changes; patch and run the highest-value static check. Expand only when evidence reveals dependencies or uncertainty.
+- **Feature / cross-component:** Multiple responsibilities, database/API changes, host conversion or asynchronous ownership. Freeze the migration boundary and use one scoped preflight dossier or its Git/`rg` equivalent.
+- **Plan-only / prompt-only:** Deliver only what was requested. A plan or question in a final response is not an implemented migration.
 
-## Preferred tools
+For selector handling, tool detection, preflight, approval and resumption, read [workflow.md](./references/workflow.md). For an explicit local file set or Activity/Fragment conversion, also read [cross-repo-fast-path.md](./references/cross-repo-fast-path.md).
 
-### MCP first
+## Essential sequence
 
-If the plugin MCP server is available, prefer:
+1. Identify target root/current branch and the exact source commit, branch tip or working-tree file fingerprints. Record include/exclude items, target behavior to preserve and validation scope.
+2. Read target rules and the relevant index/hints. Check dirty files, protected paths, merge-only paths and name collisions within this scope.
+3. Map by responsibility using [android-mapping.md](./references/android-mapping.md). Separate requested changes, necessary dependencies and unrelated source edits. Resolve genuine conflicts before writing.
+4. Port equivalent behavior with bounded source reads. Preserve target text encoding, themes, resource conventions and user changes; do not replace shared files wholesale.
+5. Follow only the applicable sections of [android-checklist.md](./references/android-checklist.md): feature closure, data compatibility, host/lifecycle ownership, resources/RTL, and [R8 adaptation](./references/android-checklist.md#obfuscation-rule-adaptation).
+6. Run static checks first. Select further verification by task need and authorization; compile, tests and assemble are not mandatory successive stages. Do not repeat a stage already covered by a successful task without new evidence.
+7. Report implemented items and exclusions against the confirmed boundary, actual checks, remaining gaps and any temporary validation prerequisites. Separate build, installation, visual checks and runtime evidence.
 
-- `analyze_android_commit_migration`
-- `build_android_mapping`
-- `collect_android_followups`
-- `analyze_local_android_migration` for a local source repository and explicit files
+## Available-tool routing
 
-### CLI fallback
+Probe once for this task. Prefer exposed migration MCP tools (`analyze_android_commit_migration`, `build_android_mapping`, `collect_android_followups`, or `analyze_local_android_migration`). If absent, check whether `commit_migration` is importable in an existing Python environment before using its CLI. If neither exists, continue with scoped Git, `rg` and precise file reads as described in [workflow.md](./references/workflow.md#tool-fallback); do not install tools or repeatedly search for unavailable MCPs.
 
-If MCP is unavailable, use the CLI:
+When the CLI is available:
 
 ```powershell
 python -m commit_migration analyze --repo <target-repo> --commit <sha>
@@ -72,39 +73,11 @@ python -m commit_migration analyze --repo <target-repo> --source-repo <source-re
   --file <source-relative-path> --file <another-source-relative-path> --json
 ```
 
-For a source file over 400 lines, never print it whole. Read bounded slices:
+For a source file over 400 lines, locate relevant symbols and read bounded slices. With the CLI:
 
 ```powershell
 python -m commit_migration slice --file <absolute-source-file> --start-line 1 --line-count 240
 ```
-
-## What to adapt
-
-Always consider:
-
-- package roots
-- file paths
-- same-responsibility classes with different names
-- imports and fully qualified class names
-- `AndroidManifest.xml`
-- custom View references in XML
-- navigation XML
-- `provider` and `authority`
-- resource names and values XML entries
-- reflection strings
-- routing strings
-- serialization model names
-- ProGuard/R8 rules, mapped class/member references, and module/variant rule-file wiring
-- target dirty-file collisions
-- protected and merge-only paths from repository hints
-- source brand/package tokens that must not remain
-
-## References
-
-- [workflow.md](./references/workflow.md)
-- [android-mapping.md](./references/android-mapping.md)
-- [android-checklist.md](./references/android-checklist.md)
-- [cross-repo-fast-path.md](./references/cross-repo-fast-path.md)
 
 ## Repo-specific hints
 
