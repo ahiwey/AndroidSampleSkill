@@ -2,12 +2,14 @@
 
 ## Verification order
 
+Select the agreed scope first using [implementation-baseline.md](implementation-baseline.md). The steps below are a verification order, not authorization or a requirement to execute every layer for ordinary adaptation.
+
 1. Discover modules, variants, and real task names.
 2. Run focused unit tests/static checks for changed logic.
 3. Compile the narrowest affected variant when source/resources/manifest/dependencies changed.
 4. Build release APK/AAB when packaging, signing input, manifests, native libraries, or release readiness is in scope.
 5. Inspect final merged/output artifacts.
-6. Run emulator and physical-device matrices.
+6. Run only agreed, authorized emulator/physical-device cases. Ask for required visual/device authorization under project rules before any probing, installation, screenshots or execution.
 7. Record manual flows separately.
 
 Example commands must be adapted to the actual project:
@@ -33,6 +35,8 @@ adb shell getconf PAGE_SIZE
 Expected AAB metadata and ELF/runtime details must follow the live 16 KB guide; keep raw reports as evidence. Run `python scripts/inspect-native.py <artifact>` for scoped baseline LOAD checks, or add `--mode release` for 64-bit RELRO checks. Neither replaces ZIP, AAB metadata or runtime checks. ARMv7 4 KB alignment is inventory-only and must not produce a recurring warning or blocker.
 
 Select device/manual rows proportional to the requested baseline. A basic adaptation does not inherit every full-release gate below. Known 64-bit risks remain documented; deferred checks are not PASS.
+
+For the default phone baseline, prioritize repeated insets, IME field/submit reachability, standalone windows, actual business-return states and address-scoped persistent BLE recovery when applicable. Reuse existing focused tests. Test-source presence alone is not execution proof: dispatcher calls do not prove predictive gestures, synthetic bond flags do not prove peripheral recovery, and a JNI assertion does not prove every native feature or ABI. Full foldable/tablet/desktop matrices and back-progress animation polish are subsequent work unless explicitly included or a demonstrated defect makes them necessary.
 
 ## Device matrix
 
@@ -74,7 +78,9 @@ Startup/native crash, data corruption, broken payment/update/critical transfer, 
 
 Critical operation obscured by insets/IME, back navigation corrupts or exits work, persistent BLE reconnect loop, long-term background failure, permission/intent breakage, or repeatable OEM critical regression.
 
-### First release checklist
+### Full release-readiness checklist
+
+Use this checklist when full release-readiness is requested. Do not attach every row as a new blocker to a completed basic adaptation. In every mode, disclose known critical defects and applicable submission blockers, with the current policy date and artifact/Console evidence; required conditions that have not been checked remain unknown.
 
 - target-36 debug/release/AAB outputs and identity/signing inputs verified
 - merged manifest and resolved dependencies reviewed

@@ -21,7 +21,8 @@ Use an evidence-first workflow. Audit before editing, implement only applicable 
 4. Identify product type before applying Play policy: phone/tablet, Wear OS, TV, Automotive, or XR.
 5. Record app module, variants, min/compile/target SDK, AGP, Gradle, JDK, UI stack, native code, BLE, LAN, health, media, background work, release channel, and available devices.
 6. Ask only for a missing choice that materially changes implementation or acceptance. Discover facts from the repository first.
-7. Default implementation delivers the agreed API 36 adaptation baseline, not a full Play release audit. Preserve a user-selected prior-project level; do not expand it or repeatedly reopen accepted ARMv7 support. Keep known in-scope defects and unverified runtime evidence honest.
+7. Default implementation delivers the concrete phone-app baseline in [references/implementation-baseline.md](references/implementation-baseline.md). Read it for implementation, completion questions and delivery reports. Apply equivalent outcomes to the actual UI stack and features; preserve a user-selected scope rather than expanding it into a full Play release audit. Do not repeatedly reopen accepted ARMv7 support.
+8. Report baseline completion and current submission blockers separately. Always list remaining work with evidence, verification status and release impact. Deferred optimization and missing expanded coverage do not automatically block baseline delivery; demonstrated critical defects or applicable submission requirements do. Never infer Play approval from the reference implementation.
 
 For policy or tool-version claims, re-check the official sources in [references/official-baseline.md](references/official-baseline.md). Treat dates and minimum versions as time-sensitive.
 
@@ -48,7 +49,7 @@ Start with a table containing item, status, evidence/count, primary files, risk,
 
 ## 3. Implement Stage A: API 36 release baseline
 
-Read the detailed acceptance checklist in [references/audit-checklist.md](references/audit-checklist.md), then work in the following order.
+Use [references/implementation-baseline.md](references/implementation-baseline.md) as the default completion contract. Use [references/audit-checklist.md](references/audit-checklist.md) to locate applicable evidence, not to turn every search hit into additional implementation work. Work in the following order.
 
 ### Dependency and SDK preflight
 
@@ -70,6 +71,7 @@ Before implementation, read [references/library-and-sdk-recipes.md](references/l
 - Base padding/margin updates on captured initial values so repeated inset dispatch is idempotent.
 - Do not unconditionally consume root insets. Audit dialogs, sheets, WebView, camera/crop, map, video, lists, and activities outside the shared base.
 - Validate gesture and three-button navigation, light/dark themes, cutouts, and input screens.
+- Input forms must keep focused fields and submit actions reachable with the IME visible; use scrolling when padding alone is insufficient. Include standalone crop/action-bar and health-privacy pages outside the shared base. Preserve system-bar contrast when themes change. Follow project RTL rules; physical left/right cutout insets describe screen edges and are not business-direction exceptions.
 
 ### Predictive back
 
@@ -77,11 +79,12 @@ Before implementation, read [references/library-and-sdk-recipes.md](references/l
 - Preserve page semantics for editing, WebView history, dialogs, selection modes, transfers, upgrades, payments, recordings, and destructive work.
 - Keep callback enablement lifecycle- and state-aware.
 - Do not use an application-wide opt-out as completion. A component-level temporary opt-out needs an owner, reason, evidence, and removal date.
+- Baseline acceptance preserves navigation and critical-work semantics. Full progress-driven back animations are subsequent UX work unless requested. Classify residual key listeners by their real dialog/popup caller; a symbol hit or a helper merely named `onBackPressed` is not itself a migration defect.
 
 ### Conditional platform surfaces
 
 - **Background work**: audit WorkManager, JobScheduler, alarms, download jobs, fixed-rate executors, services, quotas, stop reasons, restart, Doze, and standby buckets. Change `REPLACE` to `UPDATE` only when repeated periodic scheduling must preserve its cycle.
-- **BLE**: if bonding is used, model `ACTION_KEY_MISSING`, `ACTION_ENCRYPTION_CHANGE`, OEM fallback, system pairing UI, and recovery as a state/event/expected-action matrix before editing. Do not alter device protocols or association models without authorization.
+- **BLE**: if bonding is used, model `ACTION_KEY_MISSING`, `ACTION_ENCRYPTION_CHANGE`, OEM fallback, system pairing UI, and recovery as a state/event/expected-action matrix before editing. Persist recovery by normalized device address where automatic reconnect survives process recreation; cancel queued retries, guard actual BLE/pairing/SPP entries and retain an explicit user recovery path. Inspect failure-before-broadcast ordering separately. Do not alter device protocols or association models without authorization.
 - **Local network**: find sockets, LAN HTTP, mDNS/SSDP/NSD, hotspots, native networking, and WebView LAN traffic. Exercise the Android 16 compat flag and handle denial/revocation/socket errors accurately. Do not predeclare a future-platform permission without official support for the target.
 - **Health**: map legacy sensor permissions to granular health permissions where applicable; align rationale activity, privacy policy, and store declarations. Test partial grant, denial, revocation, and reauthorization.
 - **Intent security**: audit exported components, deep links, nested intents, URI grants, FileProvider, PendingIntent mutability, missing actions, and explicit-intent/filter matching. Do not disable launch security protection to hide failures.
@@ -118,6 +121,8 @@ Before implementation, read [references/library-and-sdk-recipes.md](references/l
 
 Run this work only when dependencies, OAuth scopes, APIs, stored keys, or server fields prove Google Fit is used.
 
+A legacy class name, commented Fit calls or a residual dependency does not prove an active Fit data path. If the reachable implementation already uses Health Connect, record the remaining dependency cleanup separately; do not force another migration or rename historical keys.
+
 - Inventory data types, scopes, subscriptions, history, server exchange, time zones, deletion, and source identity.
 - Introduce an adapter boundary and define Health Connect mapping and deduplication before changing the source.
 - Preserve historical preference/database/server keys unless a separately authorized schema or protocol migration exists.
@@ -129,7 +134,7 @@ Run this work only when dependencies, OAuth scopes, APIs, stored keys, or server
 Use [references/verification-and-release.md](references/verification-and-release.md).
 
 1. Discover real Gradle tasks and variants; do not invent task names.
-2. Run focused unit/static checks first. Compile when types, resources, manifests, dependencies, or packaging changed.
+2. Run focused unit/static checks first. Compile the affected boundary when needed for changed types, resources, manifests, dependencies or packaging; documentation-only changes need no Android build. Respect the project's build authorization and active-build rules.
 3. Run release APK/AAB checks only for release-readiness or when the packaging boundary is affected.
 4. Keep results separate:
    - automated/static;
@@ -139,6 +144,7 @@ Use [references/verification-and-release.md](references/verification-and-release
    - manual business flow;
    - external/supplier.
 5. `BLOCKED` and `NOT_RUN` never count as `PASS`. Emulator evidence does not replace OEM, real peripheral, hotspot, Health Connect, or 16 KB device evidence.
+6. Existing smoke-test source records intended coverage only. Dispatcher invocation is not a real predictive gesture, an IME assertion is not a visual design review, and synthetic BLE state is not real re-pairing/OTA. Request any required visual/device authorization under project rules before probing or running those tools.
 
 ## 7. Offer the optional post-implementation test checklist
 
@@ -161,7 +167,7 @@ When the user chooses a version, read and follow [references/test-checklist-gene
 If the project has an Android 16 adaptation document, update it in the same change. Otherwise create one only when the user requests a document or gives a destination. Use these seven sections:
 
 1. 结论与适用范围
-2. 阶段 A：API 36 首发上架（必须完成）
+2. 阶段 A：API 36 基础适配（默认交付标准）
 3. 阶段 B：折叠屏/平板自适应
 4. 独立迁移：Google Fit 退役
 5. 验证矩阵
@@ -169,5 +175,7 @@ If the project has an Android 16 adaptation document, update it in the same chan
 7. 本轮未验证风险
 
 Use [references/report-template.md](references/report-template.md) for the closing report. Lead with `PASS`, `PASS_WITH_RISKS`, or `BLOCKED`, and support it with exact file locations, commands, outcomes, skipped checks, artifacts, external blockers, and release impact.
+
+State the evaluated scope alongside the status. List remaining issues even after baseline completion, distinguishing deferred optimization, unverified coverage, conditional risk and an actual submission blocker. Say “未发现本次适配引入的上架阻断，剩余优化不作为当前提交阻断” only when the evidence supports that narrow statement; keep unknown required submission gates unknown and never say Google Play approved without a real review result.
 
 Before finishing, inspect only the files changed by this task and `git status --short`. Do not clean, reset, reformat, or commit unrelated user changes.

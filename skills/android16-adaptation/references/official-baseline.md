@@ -1,6 +1,6 @@
 # Official Android 16 baseline
 
-Last verified: 2026-08-17. Re-open these sources before making policy, deadline, or minimum-version claims.
+Source verification is per item: the toolchain/general baseline was checked 2026-08-17; Play target API, the Android-16-target behavior page and the 16 KB guide were re-opened 2026-10-09. Other links are pointers, not claims of a new check. Re-open relevant sources before making policy, deadline, or minimum-version claims.
 
 ## Toolchain and Play policy
 
@@ -9,7 +9,7 @@ Last verified: 2026-08-17. Re-open these sources before making policy, deadline,
 - [Set up the Android 16 SDK](https://developer.android.com/about/versions/16/setup-sdk): Android Studio and compile/target SDK setup.
 - [Google Play target API requirements](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en-AU): phone/tablet, Wear OS, TV, Automotive, and XR deadlines and exceptions.
 
-As verified on the date above, Google Play requires phone/tablet new apps and app updates to target API 36 from 2026-08-31, with an extension path described by Play. Do not reuse this sentence after the verification date without checking the live policy.
+As rechecked 2026-10-09, Google Play requires phone/tablet new apps and app updates to target API 36 from 2026-08-31, with an extension path to 2026-11-01 described by Play. Existing-app availability is a separate API-35 requirement. Recheck the live policy and any app-specific Console extension before using these dates in a submission decision.
 
 ## Android 16 behavior
 
@@ -23,7 +23,7 @@ As verified on the date above, Google Play requires phone/tablet new apps and ap
 
 ## Packaging, native code, and health
 
-- [Support 16 KB page sizes](https://developer.android.com/guide/practices/page-sizes): page-size scope rechecked 2026-09-23: Play requirement concerns 64-bit devices; the guide names arm64-v8a/x86_64 for ELF checks and includes RELRO in native verification. Do not demand ARMv7 16 KB alignment as a default. This date applies only to this source, not all sources above.
+- [Support 16 KB page sizes](https://developer.android.com/guide/practices/page-sizes), rechecked 2026-10-09: Play requirement concerns 64-bit devices for apps targeting API 35 or higher; the current guide says unsupported app updates cannot be released starting **2027-02-01**. The guide names arm64-v8a/x86_64 for ELF checks and includes RELRO in native verification. Do not demand ARMv7 16 KB alignment as a default. This is a dated statement of the guide, not proof of any app's Console eligibility, an individual extension, or runtime safety. A future submission deadline does not make an incompatible library compatible; inspect known native faults and recheck the live requirement at release time.
 - [Migrate from Google Fit to Health Connect](https://developer.android.com/health-and-fitness/health-connect/migration/fit)
 - [Health Connect permissions](https://developer.android.com/health-and-fitness/guides/health-connect/plan/data-types)
 

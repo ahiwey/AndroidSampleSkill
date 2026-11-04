@@ -2,6 +2,8 @@
 
 Use this after the Skill's scope pass. Search only relevant source/configuration directories and final artifacts; exclude `.git`, `.gradle`, and generated build caches unless inspecting a deliberate output.
 
+For ordinary implementation and completion judgments, use [implementation-baseline.md](implementation-baseline.md) as the completion contract. This checklist locates evidence; a search hit alone does not mandate a change or expand the agreed scope.
+
 ## Evidence table
 
 | Surface | Initial evidence | Completion evidence |
@@ -90,6 +92,8 @@ BluetoothGatt | reconnect | retry | unpair | forget
 ```
 
 Minimum matrix columns: connection state, bond state, event, automatic action, user prompt, timeout, recovery, and OEM fallback.
+
+Where reconnect survives process recreation, include persisted recovery restoration before queued retries, explicit device selection/unbind clearing and address isolation. Independently inspect GATT failure before the API-36 key-loss broadcast; a marked-address guard cannot cover the earlier interval.
 
 ### Local network
 

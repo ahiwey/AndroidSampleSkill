@@ -84,6 +84,8 @@ duplicate-class evidence and actual replacement API before removing any class.
 
 ## BLE SDK source recipe
 
+The default implementation level is defined in [implementation-baseline.md](implementation-baseline.md). Its reviewed address recovery uses persistent app/SDK storage. The pure-Java asset below is a smaller historical state helper, not a complete substitute for persistence, receiver wiring or call-site protection.
+
 Apply only when bonding/reconnect code exists and lacks equivalent key-loss handling.
 Typical symbol aliases: `BleBaseControl`, `BleOperateManager`, `SppHandle`, device
 receiver and application registration. Names are search leads, not required paths.
@@ -95,8 +97,10 @@ receiver and application registration. Names are search leads, not required path
 | Unrelated device event | Leave the current device's recovery state unchanged |
 | GATT failure precedes KEY_MISSING | Do not auto-remove the bond on API 36; avoid the callback/broadcast race |
 | Reconnect, createBond or SPP start while marked | Stop that automatic attempt for the affected address |
+| Process recreation while marked | Restore this address's recovery state before automatic reconnect can run |
 | Successful encryption status AND encryption enabled | Clear only this address; do not clear on encryption failure |
 | BOND_BONDED, or explicit system/user bond removal | Permit fresh pairing/recovery for that address |
+| Explicit device selection / unbind | Clear only the relevant selected BLE/classic address state and retain the intentional recovery path; background discovery must not clear it |
 | API < 36 | Preserve the existing platform behavior unless independently defective |
 
 Reusable source: [BondRecoveryState.java](../assets/sdk/BondRecoveryState.java) contains the minimal pure-Java address state from the verified case. Adapt its package to the target SDK; reuse an existing equivalent class instead of adding a second state owner. It does not register receivers or patch call sites automatically.
@@ -116,8 +120,13 @@ Implementation: use one owner for a thread-safe address set with `Locale.ROOT`
 normalization; distinguish BLE and classic addresses. Register API-36 broadcasts
 conditionally. Add guards to every *actual* automatic reconnect/pairing/SPP entry,
 including already queued callbacks. Confirm the UI retains an explicit recovery path.
-The previous implementation used memory-only state; check process recreation and OEM
-event delivery for the target SDK instead of treating it as guaranteed persistence.
+The historical asset uses memory-only state. If automatic reconnect survives process
+recreation, integrate the target project's existing persistent storage with one owner;
+verify restoration before reconnect and address-scoped clearing. Memory-only tests do
+not satisfy that requirement. The reviewed persistent implementation still leaves
+failure-before-KEY_MISSING auto-unbond ordering to inspect: a guard on the recorded
+flag alone cannot protect the interval before the broadcast. Preserve this conditional
+risk instead of copying it or claiming it has been fixed. Check OEM event delivery.
 Preserve protocol bytes, retry timing outside recovery and existing success behavior.
 
 Verify unrelated-address isolation, duplicate key loss, BLE/classic independence,
