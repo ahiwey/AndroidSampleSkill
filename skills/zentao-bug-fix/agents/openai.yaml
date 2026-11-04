@@ -1,0 +1,4 @@
+interface:
+  display_name: "禅道 Bug 修复"
+  short_description: "按条件读取禅道 Bug，修复验证后核验目标状态，并汇总成功与失败"
+  default_prompt: "使用 $zentao-bug-fix 处理当前禅道项目中激活且未确认的 1 条 Bug，排除已修复问题，修复并完成约定验证后设为已确认、保持 Bug 状态不变，刷新核验并生成成功与失败结果文档；设备操作须另有本次授权。"
