@@ -1,6 +1,6 @@
 ---
 name: android-r8-release-audit
-description: Audit and, when authorized, enable or repair Android R8 optimization, obfuscation, code/resource shrinking and keep rules; inspect resolved consumer rules and release artifacts, and validate affected runtime paths on an authorized device. Use for R8/ProGuard, minify, missing classes, release-only reflection/serialization failures or release-size optimization, not ordinary UI work or an automatic AGP upgrade.
+description: Audit and, when authorized, enable or repair Android R8 optimization, obfuscation, code/resource shrinking and keep rules; inspect resolved consumer rules and release artifacts, and validate affected runtime paths on an authorized device. Use for R8/ProGuard, minify, missing classes, release-only reflection/serialization failures, release-size optimization, or a scoped safety check for new/changed serialization models, cache enums and reflection consumers. Pure UI styling does not trigger an App-wide audit or AGP upgrade.
 ---
 
 # Android R8 Release Audit
@@ -14,6 +14,12 @@ description: Audit and, when authorized, enable or repair Android R8 optimizatio
 - 产物验证：配置/keep 改动需要时运行最窄的真实 release/minify 任务；设备测试或资源缩减验收需要最终 APK 时再 assemble。
 - 设备验证：沿用本任务已有明确授权；缺授权时先完成可独立推进的分析、修改与产物检查，再询问。缺账号、外设或样本记为未验证，不制造通过结果。
 - 当前环境有第三方 r8-analyzer 时可作辅助参考，但不要依赖其安装、照搬其默认删除建议或隐藏异常。该技能自身足以完成流程。
+
+## 普通开发：局部模型检查
+
+新增/修改 DTO、本地 JSON 缓存、嵌套类型、枚举或反射入口时自动适用，包含新增未跟踪文件，不要求用户先说“检查混淆”。仅沿本次类型和实际消费者追踪，按[规则与反射检查](references/rule-audit.md#普通开发的模型检查)确认 serializer/adapter、字段/枚举名称、类型存活、构造器/泛型与有效规则。纯 UI/普通逻辑类先判用途，不机械加注解或 keep。
+
+这一路径不自动执行下面的完整优化审计：先完成静态证据及授权范围内的最小修复；确有必要且符合项目边界时才做目标 minify/产物验证。使用现有配置和依赖，交付区分静态、混淆产物及旧数据运行状态。
 
 ## 执行顺序
 

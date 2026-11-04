@@ -35,6 +35,8 @@ description: Implement Android pages and interactions from Lanhu or local design
 ## 按需加载，默认不跑工具全套
 
 - 长图细节不可辨、需要切图预览/取色、ZIP 未整理、资源难匹配或确需下载才读 [取材](references/extraction.md)；资源已清楚就直接用。
+- 新增/修改弹框、底部面板或选择器时，先查公共实现、实际调用方和主题；默认直接复用并在交付注明来源，禁止直接用无项目样式的原生弹框。不同样式或扩大共用影响范围只在尚未明确批准时集中确认，细则见[资源复用](references/resource-reuse.md)。
+- 页面实现若新增/修改 DTO、JSON 缓存、嵌套枚举或反射入口，先按项目 `AGENTS/r8-proguard-rules.md` 或可用 `android-r8-release-audit` 做局部检查；两者缺失时仍核对实际 adapter、类型/字段名/构造/泛型与生效 keep，缺口明确报告，不自动安装、全应用审计或添加依赖。纯样式和普通逻辑类不机械加注解。
 - 公共组件、背景或图标需要调整/替换才读 [资源复用](references/resource-reuse.md)；已有项目专项规则时沿用其口径，不重复展开两套清单。
 - 布局关系、颜色角色、指标数据语义或图表涉及实现/返工时读 [视觉契约](references/visual-contract.md)，只核对相关项；严重视觉语义偏差不属于可跳过的像素精修。
 - 列表阈值、折叠、添加返回或异步状态涉及变化才读 [交互](references/state-modeling.md)。

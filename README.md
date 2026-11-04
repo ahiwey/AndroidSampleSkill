@@ -2,7 +2,15 @@
 
 面向 Android 工程与智能体协作流程的可复用 Codex Skills 集合。本仓库只收录由 [ahiwey](https://github.com/ahiwey) 编写和维护的 Skill，不包含本机 Codex 环境中安装的第三方 Skill。
 
-仓库维护版本：`0.1.0`（[VERSION](./VERSION)）。AndroidEasyRules 使用其独立版本号。
+仓库维护版本：`0.1.1`（[VERSION](./VERSION)）。AndroidEasyRules 使用其独立版本号。
+
+## 版本记录
+
+### 0.1.1 — 2026-11-04
+
+- Lanhu 工作流要求新增弹框先复用公共样式，样式偏离沿用明确批准或集中确认。
+- R8 审计新增普通开发的局部序列化检查，覆盖嵌套枚举、反射模型、泛型和旧缓存。
+- 补齐设置保存/回显/迟到回包与迁移目标样式、模型保留规则检查；增加代表案例及反例。
 
 ## Skills 一览
 

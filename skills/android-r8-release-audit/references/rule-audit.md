@@ -2,6 +2,19 @@
 
 按本次受影响依赖和动态入口定向排查，避免清单驱动的无边界扫描。官方依据见文末；版本相关结论以项目实际解析产物和匹配版本文档为准。
 
+## 普通开发的模型检查
+
+只从本次新增/修改的类型及实际使用入口追踪，包含新增未跟踪文件；沿其字段、集合泛型和嵌套枚举核对到实际 adapter，不扫描无关模型。简记“类型/用途 → serializer/adapter → 名称与构造契约 → 生效规则 → 验证状态”，无需另建报告。
+
+- 先查调用端使用的 Moshi、Gson、kotlinx.serialization、自定义 adapter 或其他机制及当前依赖版本；类名含 Entity/Bean、存在某个注解、外层已生成 adapter，都不能单独证明链路安全。纯 UI 状态或普通逻辑类不强加 JSON 注解/keep；仅由 Room 等生成代码使用的类型也先确认是否另有 JSON/反射用途。
+- Moshi 区分 codegen、Kotlin 反射和 Java 反射。对采用 codegen 的模型确认 `@JsonClass(generateAdapter = true)` 与现有处理器/生成产物匹配；分别检查字段类型和枚举。默认枚举反射路径按当前版本核实 `@JsonClass(generateAdapter = false)` 及其 consumer 是否生效，或提供等价精准保留证据。`@Json(name=...)` 固定 JSON 名称不等于保证反射成员存活；自定义 adapter 以实际注册/选中路径为准。
+- Gson 核对 `@SerializedName` 或既有稳定命名策略、实际字段与承载类、实例化方式/构造器、TypeToken 及 Retrofit 返回泛型。字段注解不替代完整规则；`-keepclassmembers` 不能单独证明类不会被删除。kotlinx.serialization 等生成方案确认现有插件、生成 serializer 及发现方式，不混加 Moshi/Gson 注解。
+- 核对目标变体加载的 app/library、consumer 和生成规则；已覆盖时复用并记录依据，缺失时仅补本次动态用途需要的注解或规则。不得整包 keep、关闭混淆、添加全局 dontwarn，或顺手升级依赖来兜底。
+- 本地 JSON 包括持久化结果和状态枚举：用旧字段名/枚举值的代表样本及新增值检查读写兼容，不只测新写新读，不清缓存掩盖问题。遇到未知枚举按既有兼容策略处理，不凭空更改协议。
+- 完成范围内静态检查；有必要且符合项目构建边界时，执行最窄真实 minify/release 任务，核对对应 configuration、mapping 与 DEX 中的类型、字段、构造器、泛型和所需枚举成员。Debug 单测/编译通过不能证明 Release 安全，缺构建/产物/旧缓存运行证据时分别标未验证，不以自动构建替代检查。
+
+机制依据：[Moshi R8/枚举说明](https://github.com/square/moshi#r8--proguard)、[Gson 排错](https://google.github.io/gson/Troubleshooting.html)、[R8 FAQ](https://r8.googlesource.com/r8/+/refs/heads/main/compatibility-faq.md)。实施结论仍以项目实际依赖和合并规则为准。
+
 ## 规则来源和冲突
 
 - 配置来源包括默认规则、app proguardFiles、library consumerProguardFiles、AAR 内 proguard.txt / consumer 文件、JAR META-INF/proguard、代码生成器规则和嵌套 JAR。只查看进入目标变体的产物；不要因另一个模块存在就假设规则已合并。
