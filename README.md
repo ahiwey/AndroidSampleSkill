@@ -2,9 +2,15 @@
 
 面向 Android 工程与智能体协作流程的可复用 Codex Skills 集合。本仓库只收录由 [ahiwey](https://github.com/ahiwey) 编写和维护的 Skill，不包含本机 Codex 环境中安装的第三方 Skill。
 
-仓库维护版本：`0.1.1`（[VERSION](./VERSION)）。AndroidEasyRules 使用其独立版本号。
+仓库维护版本：`0.1.2`（[VERSION](./VERSION)）。AndroidEasyRules 使用其独立版本号。
 
 ## 版本记录
+
+### 0.1.2 — 2026-11-10
+
+- 新增 QRingSDkSampleSkill：执行 clean、压缩固定八项 Sample 工程内容、导出中英文 PDF、收集 SDK AAR 并生成对外交付 ZIP。
+- 支持持久保存输出目录、当前 SDK 优先与数字版本回退，以及同版本旧交付包保留。
+- 增加 PDF 标题、代码块、表格单元格完整性与 ZIP 校验，修复表格代码中管道符导致内容丢失的问题；14 项测试及真实打包验证通过。
 
 ### 0.1.1 — 2026-11-04
 
@@ -16,6 +22,7 @@
 
 | Skill | 主要功能 | 适用场景 | 详细说明 |
 | --- | --- | --- | --- |
+| `QRingSDkSampleSkill` (`qring-sdk-sample-skill`) | clean 后压缩固定八项 Sample 文件，导出中英文 PDF、收集 SDK AAR 并生成交付 ZIP；记忆输出目录。 | QRing Sample 对外打包、修改打包目录、版本回退和交付文件校验。 | [执行流程](./skills/qring-sdk-sample-skill/SKILL.md) |
 | `lanhu-android-fast-workflow` | 本地原图与 `xxhdpi` 切图优先，默认不调用 MCP，复用共用布局并完成主要交互、跳转和轻量验收。 | 几页 Android UI 快速实现、状态切换、缺页占位与单点精修。 | [打开文档](./skills/lanhu-android-fast-workflow/README.md) |
 | `multilingual-faq-sync` | 将 FAQ 的增删改按英语结构坐标快速同步到默认 11 个语言 JSON，自动处理编号、占位符和一致性验证。 | `q_cn/q_en` 等 FAQ 多语言维护、批量新增、删除、更新与结构修复。 | [打开文档](./skills/multilingual-faq-sync/README.md) |
 | `android-string-resource-audit` | 审计、补齐并安全排序 Android 多语言 `strings.xml`，检查占位符、编码、乱码和键顺序。 | 缺失翻译、英文回退、批量同步 `values-*`、资源排序。 | [打开文档](./skills/android-string-resource-audit/README.md) |

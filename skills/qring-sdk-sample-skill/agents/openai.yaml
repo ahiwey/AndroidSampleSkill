@@ -1,0 +1,4 @@
+interface:
+  display_name: "QRingSDkSampleSkill"
+  short_description: "QRing Sample 一键交付打包、双语 PDF 与 SDK AAR 归档"
+  default_prompt: "使用 $qring-sdk-sample-skill 帮我打包当前 QRing Sample，完成后给我最终 ZIP 链接。"
