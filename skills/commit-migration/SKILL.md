@@ -37,15 +37,15 @@ Treat requests like these as triggers:
 - **Feature / cross-component:** Multiple responsibilities, database/API changes, host conversion or asynchronous ownership. Freeze the migration boundary and use one scoped preflight dossier or its Git/`rg` equivalent.
 - **Plan-only / prompt-only:** Deliver only what was requested. A plan or question in a final response is not an implemented migration.
 
-For selector handling, tool detection, preflight, approval and resumption, read [workflow.md](./references/workflow.md). For an explicit local file set or Activity/Fragment conversion, also read [cross-repo-fast-path.md](./references/cross-repo-fast-path.md).
+For selector handling, tool detection, preflight, approval and resumption, read [workflow.md](./references/workflow.md). For an explicit local file set or Activity/Fragment conversion, use the applicable guidance in [cross-repo-fast-path.md](./references/cross-repo-fast-path.md). Keep the short working note for Quick local edits and use the dossier for feature or cross-component scope.
 
 ## Essential sequence
 
 1. Identify target root/current branch and the exact source commit, branch tip or working-tree file fingerprints. Record include/exclude items, target behavior to preserve and validation scope.
 2. Read target rules and the relevant index/hints. Check dirty files, protected paths, merge-only paths and name collisions within this scope.
-3. Map by responsibility using [android-mapping.md](./references/android-mapping.md). Separate requested changes, necessary dependencies and unrelated source edits. Resolve genuine conflicts before writing.
+3. Map by responsibility using [android-mapping.md](./references/android-mapping.md) and trace the target's actual entry points. Before writing, check [R8 adaptation](./references/android-checklist.md#obfuscation-rule-adaptation) when the migration touches serialized types or caches, reflection or annotation-based discovery, JNI, or module/dependency/variant wiring. These checks apply even when the selected source diff has no rules change. Separate necessary dependencies from unrelated edits and resolve genuine conflicts.
 4. Port equivalent behavior with bounded source reads. Preserve target text encoding, themes, resource conventions and user changes; do not replace shared files wholesale.
-5. Follow only the applicable sections of [android-checklist.md](./references/android-checklist.md): feature closure, data compatibility, host/lifecycle ownership, resources/RTL, and [R8 adaptation](./references/android-checklist.md#obfuscation-rule-adaptation).
+5. Check the implementation against the applicable sections of [android-checklist.md](./references/android-checklist.md) and the mappings from preflight.
 6. Run static checks first. Select further verification by task need and authorization; compile, tests and assemble are not mandatory successive stages. Do not repeat a stage already covered by a successful task without new evidence.
 7. Report implemented items and exclusions against the confirmed boundary, actual checks, remaining gaps and any temporary validation prerequisites. Separate build, installation, visual checks and runtime evidence.
 

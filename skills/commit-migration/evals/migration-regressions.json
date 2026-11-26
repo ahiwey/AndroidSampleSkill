@@ -1,7 +1,7 @@
 {
   "skill": "commit-migration",
-  "date": "2026-10-20",
-  "evaluation_mode": "Offline decision review with synthetic fixtures; not an independent model run or Android runtime test.",
+  "date": "2026-11-26",
+  "evaluation_mode": "Offline decision review with synthetic fixtures, suitable for independent review.",
   "instructions": "Read each request and raw fixture facts, then decide scope, tool route, edits and verification. Judge observable decisions against expected outcomes. Do not grade by matching wording in SKILL.md. Live repositories, devices, network calls and dependency installation are outside these fixtures.",
   "cases": [
     {
@@ -118,6 +118,59 @@
         "Recheck relevant fingerprints/diff and complete only remaining call sites within the approved boundary; do not redo full discovery or reconfirm unchanged approval.",
         "Preserve commented identification state and unrelated user edits, and run proportional static checks for the new changes.",
         "Report static completion, unperformed build/install/visual/runtime stages and exact remaining gaps; do not inherit another chat's device permission or treat the earlier plan marker as implementation."
+      ]
+    },
+    {
+      "id": "nested-cache-serializer-without-source-rules",
+      "request": "把新版记录摘要和缓存读取迁到目标，升级前的摘要要继续可见。已确认实施，可用现有缓存测试，本次不构建发布包、不操作设备。",
+      "fixtures": {
+        "source": "The selected commit adds Moshi-generated Summary with nested Entry, List<Entry> and a State enum. Wire names are items, count and state, with enum value done. The commit has no .pro changes.",
+        "target": "The existing SummaryCache uses reflective Gson and @SerializedName. It reads the cache with an anonymous TypeToken<List<Summary>>. The minified storeRelease configuration loads app/shrink-cache.pro and the resolved Gson consumer rules.",
+        "store_release_rules": {
+          "app": ["-keep class example.cache.Summary { *; }"],
+          "gson_consumer": ["-keepattributes Signature,RuntimeVisibleAnnotations", "-keep class com.google.gson.reflect.TypeToken", "-keep class * extends com.google.gson.reflect.TypeToken"]
+        },
+        "payloads": [
+          {"stored_by": "previous target version", "json": "[{\"total\":3}]", "visible_summary_count": 3},
+          {"stored_by": "incoming source version", "json": "[{\"items\":[{\"count\":3,\"state\":\"done\"}]}]", "visible_summary_count": 3}
+        ]
+      },
+      "expected_outcomes": [
+        "Trace the target cache read and write paths. Keep their Gson contract, map items, count, state and done explicitly, and preserve the visible total for legacy payloads. Use the existing cache tests to check both payloads and a new-format round trip.",
+        "Check nested reflective members and construction, enum wire names and generic signatures against the storeRelease app and resolved consumer inputs even though no source .pro changed. Add only the missing target model coverage through the loaded app rules, without duplicating the generic-list coverage.",
+        "Report rule inspection and cache test results separately. Leave minified artifact behavior and device runtime unverified."
+      ]
+    },
+    {
+      "id": "resolved-consumer-rules-cover-reflection",
+      "request": "把格式化入口和相关混淆改动从源提交迁到商店版。已确认实施，这次只核对源码和当前构建配置。",
+      "fixtures": {
+        "source": "The entry loads example.packet.ReleasePacketCodec by class name, invokes its public no-arg constructor, and reads the generic return type List<String> of items(). The same commit adds an app keep rule for that class and a Signature attribute rule.",
+        "resolution": "The target's prodReleaseRuntimeClasspath resolves example.packet:packet-codec:2.4 as an AAR. Debug resolves 2.3. The current prodRelease R8 input report lists the extracted proguard.txt from the 2.4 AAR.",
+        "aar_rules": [
+          "-keep class example.packet.ReleasePacketCodec { public <init>(); public java.util.List items(); }",
+          "-keepattributes Signature"
+        ],
+        "available_evidence": "Class metadata from that AAR confirms items() declares List<String>. No matching minified APK, mapping, or runtime result is supplied."
+      },
+      "expected_outcomes": [
+        "Follow prodRelease dependency resolution and the R8 input report to the exact AAR and compare the loaded rules with the class name, constructor, method and generic signature used by the migrated entry.",
+        "Migrate the entry with zero added keep rules because the active consumer rules cover its reflection contract. Keep the target dependency and shrinker wiring intact.",
+        "Mark coverage as verified by configuration and AAR metadata. Report minified artifact and runtime behavior as unverified."
+      ]
+    },
+    {
+      "id": "release-permission-and-dialog-host",
+      "request": "把录音提醒和确认弹框迁到商店版现有录音页，保留该页的入口和弹框样式。已确认实施，可用现有截图测试，不做设备验证。",
+      "fixtures": {
+        "source": "Android 13+ notification flow requests POST_NOTIFICATIONS when required. A denial leaves the local reminder saved and suppresses notification delivery. The confirmation layout fills the usable dialog content width.",
+        "target_manifests": "The target retains POST_NOTIFICATIONS in main and the old Debug acceptance passed with permission granted. The storeRelease overlay currently removes the permission through tools:node=\"remove\". The existing manifest merger report attributes the absence to that overlay. Target acceptance for this migration includes notification delivery when the user grants permission.",
+        "target_dialog": "The entry opens through RecordingActivity and its shared dialog theme. At a 360dp viewport the host has 16dp dialog insets on each side. An old isolated content snapshot asserted 360dp. The existing Paparazzi harness accepts the target theme and host constraints."
+      },
+      "expected_outcomes": [
+        "Use the storeRelease entry and merger evidence to correct the in-scope overlay. Check the resulting merged permission and trace the granted, denied and request paths in code. Preserve the local reminder on denial.",
+        "Use the existing RecordingActivity dialog style and exercise it with the target theme and insets in the screenshot harness. Check that content fills the resulting 328dp area and that actions remain visible, instead of changing the shared theme to match the old isolated width.",
+        "Report merged manifest and host-constraint screenshot results separately. Leave real permission prompts, notification delivery and dialog interaction unverified in the absence of device runs."
       ]
     }
   ]

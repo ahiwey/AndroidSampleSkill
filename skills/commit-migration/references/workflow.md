@@ -14,6 +14,8 @@ For a small known fix, keep this in a short working note rather than creating a 
 | Source behavior/file | Target | Apply / preserve / exclude | Necessary dependency | Conflict / confidence |
 | --- | --- | --- | --- | --- |
 
+For each affected path, identify the real target caller and what changes its behavior. Record the relevant host/theme, permission or device capability, data producer and consumer, or SDK dependency and consuming app variant. Include gaps that would change the plan, such as a missing manifest declaration, a different response callback, or a target policy that conflicts with the source behavior. Use the same working note or matrix for this evidence.
+
 Treat source and target dirt as current facts, not permission to stash, reset or overwrite. A dirty target is not automatically a blocker; merge independent hunks and ask only when ownership or behavior actually conflicts. Follow explicit protected-path rules, but do not invent additional approval requirements just because a migration touches a database or protocol.
 
 ## Resolve the source selection
@@ -48,7 +50,7 @@ Apply minimal patches. Preserve target encoding/BOM/newlines and compare touched
 - Compilation is opt-in through the task/project rules or required by a concrete verification need. Use the narrowest module/variant/task. If a focused test already compiled the affected code, do not compile it again just to follow a sequence.
 - For state, parsing or data-migration changes, prefer meaningful boundary/legacy fixtures over tests that only repeat the implementation. Check an existing framework before adding dependencies.
 - If compilation is needed before tests, expose resource/Kotlin/Java errors first, fix errors with a common cause together, then rerun the failed stage. Assemble only for an actual packaging/install/wiring check; an XML edit alone does not force an APK build.
-- Follow the task's visual/device authorization. A build, a component snapshot and interaction in the real host prove different things. Do not start device discovery, installation or screenshots merely because code was migrated.
+- Follow the task's visual/device authorization. For a component snapshot, use the target host's theme, sizing and direction constraints that affect the change. Record component rendering and interaction in the real host separately. Do not start device discovery, installation or screenshots merely because code was migrated.
 - Stop after sufficient successful checks unless a change or new failure warrants another run. Record missing dependencies or temporary validation inputs so success does not imply a reproducible clean build.
 
 ## Resume and hand off

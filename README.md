@@ -2,9 +2,15 @@
 
 面向 Android 工程与智能体协作流程的可复用 Codex Skills 集合。本仓库只收录由 [ahiwey](https://github.com/ahiwey) 编写和维护的 Skill，不包含本机 Codex 环境中安装的第三方 Skill。
 
-仓库维护版本：`0.1.2`（[VERSION](./VERSION)）。AndroidEasyRules 使用其独立版本号。
+仓库维护版本 `0.1.3`（[VERSION](./VERSION)）。AndroidEasyRules 使用其独立版本号。
 
 ## 版本记录
+
+### 0.1.3 — 2026-11-26
+
+- `commit-migration` 根据最近 20 次使用记录前移 R8 检查，按目标变体核对序列化契约、依赖规则和规则接入，只补有证据的缺口。
+- 迁移前沿目标调用方检查权限、设备回读、SDK 消费方及 UI 宿主约束。Quick 小改继续使用定向检查。
+- 新增嵌套缓存、AAR consumer rules 和发布变体权限与弹框三个回归案例，独立推演覆盖这三例及 Quick 小改。
 
 ### 0.1.2 — 2026-11-10
 
